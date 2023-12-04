@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta >
+    <script src="websr.js"> </script>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <script src="image-compare-viewer.min.js"></script>
+    <link href="image-compare-viewer.min.css" rel="stylesheet">
+    <script src="webm-writer.js"></script>
+    <title>Video Upscaler</title>
+    <style>
+
+        body{
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        h3{
+            width: 100%;
+            text-align: center;
+            color: #666;
+            font-weight: normal;
+        }
+
+        #logo{
+            height: 70px;
+            margin: auto;
+            display: block;
+        }
+        .panel{
+            display: none;
+            width: 640px;
+            margin: auto;
+            background: #F5F5F5;
+            padding: 20px 30px;
+            -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+            -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+            box-sizing: border-box;         /* Opera/IE 8+ */
+        }
+        p{
+            width: 640px;
+            margin: auto;
+            display: block;
+            text-align: center;
+            margin-bottom:  20px;
+        }
+
+        video {
+            margin: -20px -30px 10px -30px;
+        }
+        #error{
+            display: none;
+        }
+
+        #file-load-panel{
+            display: block;
+        }
+
+        #done{
+            display: none;
+        }
+    </style>
+</head>
+
+<body >
+
+
+
+<h3>AI Video Upscaler</h3>
+<p>This free upscaling software is <b>experimental</b>. It works up to 100x faster than other AI Upscalers, but the quality improvement may be less noticeable.</p>
+
+<div id="unsupported-panel" class="panel" >
+    <p>Your browser doesn't have the functionality needed for AI Upscaling. Please use the latest version of Google Chrome. If you are currently using Chrome, open  <pre>chrome://flags/#enable-experimental-web-platform-features</pre> in a new tab, and enable "Experimental Web Platform features". When you come back to this page, you should be able to upload a video. If you think there's still an issue, contact us at team@vectorly.io</p>
+</div>
+
+<div id="file-load-panel" class="panel" >
+    <p>Choose a video to upscale</p>
+    <input type="file" onchange="loadVideo(this)" accept="video/mp4,video/webm">
+</div>
+
+
+ <div id="file-save-panel" class="panel">
+    <input type="button" value="FileSave" onclick="save()">
+</div>
+
+
+<div id="start-panel" class="panel">
+
+
+    <div id="image-compare">
+        <video id="video" width="640" height="360" muted></video>
+        <canvas id="upscaled" ></canvas>
+    </div>
+
+    <p id="loading">Loading...</p>
+    <p id="error">An error ocurred while upscaling</p>
+    <div  id="choose-destination" style="display: none;">
+        <p>Choose where to save the video</p>
+        <input  type="button" value="Choose Destination" onclick="chooseDestination()">
+    </div>
+
+    <div id="info"></div>
+
+    <input id="done" type="button" value="Upscale another video" onclick="refresh()">
+</div>
+
+
+
+
+
+
+<script>
+
+    let handle;
+    let writeable;
+    let codec_string = "vp09.00.10.08";
+    const video  =  document.getElementById("video");
+    const canvas = document.getElementById("upscaled")
+    let width;
+    let height;
+    let destinationFileName = "myUpscaledVideo.webm";
+    let playing = false;
+
+    var pending_outputs = 0;
+    let frames_processed = 0;
+    let progress  = document.getElementById("info");
+
+    let gpu;
+
+
+    async function main() {
+
+        if(!"VideoEncoder" in window) return showUnsupported("Your Browser doesn't support WebCodecs");
+
+        gpu = await WebSR.initWebGPU();
+
+        if(!gpu) return showUnsupported("Your Browser doesn't support WebGPU");
+
+        window.loadVideo = inputHandler;
+
+    }
+
+    main();
+
+    function showUnsupported() {
+
+    }
+
+
+    function inputHandler(input){
+
+        const file = input.files[0];
+        const url = URL.createObjectURL(file);
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            setupUpscaler(url);
+        }
+
+        destinationFileName = file.name.split(".")[0] + "-upscaled.webm";
+        reader.readAsDataURL(file);
+
+    }
+
+    async function setupUpscaler(url) {
+        video.src = url;
+
+        video.onloadeddata = async function (){
+            const websr = new WebSR({
+                source: video,
+                network_name: "anime4k/cnn-2x-s",
+                weights: await (await fetch('cnn-2x-s.json')).json(),
+                 gpu: gpu,
+                canvas: canvas
+            });
+
+            console.log(video.videoWidth);
+
+            console.log(video);
+
+            console.log("Loaded video");
+
+            canvas.width = video.videoWidth*2;
+            canvas.height = video.videoHeight*2;
+/*
+            video.width = video.videoWidth*2;
+            video.height = video.videoHeight*2;
+
+            document.getElementById('image-compare').style.width = `${video.videoWidth*2}px`;
+            document.getElementById('image-compare').style.height = `${video.videoHeight*2}px`;
+
+
+*/
+            document.getElementById('start-panel').style.display = "block";
+
+            // View them side by side
+            new ImageCompare( document.getElementById("image-compare")).mount();
+
+
+
+            const videoWriter = await saveFile();
+
+
+
+            const encoder_config = {
+                codec: codec_string,
+                width: video.videoWidth*2,
+                height: video.videoHeight*2,
+                bitrate: 1e7,
+                framerate: 30,
+            };
+
+
+            const init = {
+                output: (chunk) => {
+                    handleEncoded(chunk);
+                },
+                error: (e) => {
+                    console.log(e.message);
+                }
+            };
+
+            let encoder = new VideoEncoder(init);
+            encoder.configure(encoder_config);
+
+
+            const frameStack = [];
+
+           async function decodeLoop() {
+               let bitmap = await createImageBitmap(video);
+               frameStack.push({
+                   frame: bitmap,
+                   time: video.currentTime
+               });
+               pending_outputs +=1;
+               if(frameStack.length > 10) video.pause();
+               video.requestVideoFrameCallback(decodeLoop);
+           }
+
+           async function encodeLoop() {
+               if(frameStack.length ===0 && !video.ended) return video.requestVideoFrameCallback(encodeLoop);
+               const { frame, time } = frameStack.shift();
+
+               await websr.render(frame);
+
+               const upscaled_bitmap = await createImageBitmap(canvas);
+
+               const upscaled_frame = new VideoFrame(upscaled_bitmap, { timestamp: time*1000*1000});
+
+               frames_processed +=1;
+
+               const isKeyFrame = frames_processed %60 ===0;
+
+               encoder.encode(upscaled_frame, { keyFrame: isKeyFrame});
+
+               upscaled_frame.close();
+
+               if(!(video.ended && frameStack.length ===0) ) await encodeLoop();
+           }
+
+            video.requestVideoFrameCallback(decodeLoop);
+
+            video.play();
+
+            video.requestVideoFrameCallback(encodeLoop);
+
+
+
+            async function handleEncoded(chunk){
+
+                videoWriter.addFrame(chunk);
+
+                pending_outputs --;
+
+                if(video.ended && pending_outputs ===0){
+                    await videoWriter.complete();
+
+                    console.log("Done");
+                    progress.innerText = `Upscaled video saved as ${destinationFileName}`;
+                    document.getElementById("done").style.display = "block";
+                    writeable.close();
+
+                }
+
+            }
+
+
+
+
+        }
+
+    }
+/**
+    var setupUpscaler = function (url){
+
+
+        video.src = url;
+        document.getElementById("file-load-panel").style.display = "none";
+        document.getElementById("start-panel").style.display = "block";
+
+
+        video.onloadeddata = function (){
+
+            width = video.videoWidth;
+            height = video.videoHeight;
+
+
+            const upscaler_init_config = {
+                w: width,
+                h: height,
+                renderSize: {w: width*2, h: height*2},
+                canvas: canvas,
+                float_type: "float16",
+                use_webgl1: "false",
+                networkParams: {
+                    name: 'residual_5k_2x',
+                    tag: 'general',
+                    version: '0',
+                },
+                token: "0912c95e-c4e5-47d0-bf26-01b214f01f48"
+            };
+
+           upscaler = (new vectorlyUpscaler.core())
+                .on('load', function () {
+                    console.log("Upscaler initialized");
+                    gl  = document.getElementById("upscaled").getContext("webgl2");
+                    document.getElementById("choose-destination").style.display = "block";
+                    document.getElementById("loading").style.display = "none";
+                })
+                .on('error', function () {
+                    document.getElementById("loading").style.display = "none";
+                    document.getElementById("error").style.display = "block";
+
+                    alert("Failed to initialize AI Upscaler");
+
+                })
+                .on('start', function () {
+                    console.log("Starting upscaling"); })
+                .on('stop', function () {
+                    console.log("Stopping upscaling"); });
+
+            upscaler.load(upscaler_init_config);
+
+
+
+        }
+
+
+
+    }
+
+**/
+
+
+    async function saveFile() {
+
+
+        handle = await window.showSaveFilePicker({
+            startIn: 'videos',
+            suggestedName: destinationFileName,
+            types: [{
+                description: 'Video File',
+                accept: {'video/webm' :['.webm']}
+            }],
+        });
+
+        writeable = await handle.createWritable();
+        const videoWriter = new WebMWriter({
+            fileWriter: writeable,
+            codec: 'VP9',
+            width: width*2,
+            height: height*2
+        });
+
+
+
+        return videoWriter;
+    }
+
+
+    var chooseDestination = function () {
+        saveFile().then(function (videoWriter){
+
+            var framesUpscaled = 0;
+            document.getElementById("choose-destination").style.display = "none";
+
+            let frames = [];
+            var upscaled_frames = [];
+
+
+
+
+            video.play();
+            playing = true;
+
+            video.onended = function (){
+                playing = false;
+            }
+
+            function captureLoop(){
+                video.requestVideoFrameCallback(function () {
+
+                    createImageBitmap(video).then(function (bitmap){
+                        frames.push({bitmap: bitmap, time: video.currentTime});
+                    });
+
+                    captureLoop();
+                });
+            }
+
+
+            function renderLoop(){
+
+                if(frames.length < 1) return  setTimeout(renderLoop, 30);
+
+                let {bitmap, time} = frames.shift();
+
+                upscaler.setInput(bitmap); // Sets input element
+                upscaler.render(); // Renders to canvas
+                gl.finish();
+
+                createImageBitmap(canvas).then(function (upscaled_bitmap){
+
+
+
+
+
+                    pending_outputs++;
+
+
+                    framesUpscaled++;
+
+
+
+
+
+                    renderLoop();
+
+                });
+
+
+            }
+
+
+
+            captureLoop();
+
+            renderLoop();
+
+
+
+
+
+
+        });
+    };
+
+    var refresh = function () {
+        location.reload();
+    }
+
+
+
+</script>
+
+</body>
+
+</html>
