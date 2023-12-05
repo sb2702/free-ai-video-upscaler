@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
     <script src="image-compare-viewer.min.js"></script>
     <link href="image-compare-viewer.min.css" rel="stylesheet">
+    <script src="mp4-muxer.js"></script>
     <script src="webm-muxer.js"></script>
     <script src="webm-writer.js"></script>
     <title>Video Upscaler</title>
@@ -200,18 +201,19 @@
 
 
 
-            const muxer = new WebMMuxer.Muxer({
-                target: new WebMMuxer.ArrayBufferTarget(),
+            const muxer = new Mp4Muxer.Muxer({
+                target: new Mp4Muxer.ArrayBufferTarget(),
                 video: {
-                    codec: 'V_VP9',
+                    codec: 'avc',
                     width: video.videoWidth*2,
                     height: video.videoHeight*2
                 },
                 audio: {
-                    codec:  'A_OPUS',
+                    codec:  'aac',
                     numberOfChannels: 2,
                     sampleRate: 48000
                 },
+                fastStart: 'in-memory'
             });
 
 
@@ -226,11 +228,10 @@
             let finished= false;
 
             audioEncoder.configure({
-                codec: 'opus',
+                codec: 'mp4a.40.2',
                 sampleRate: 48000,
                 numberOfChannels: 2
             })
-
 
 
             function copyAudioData(inputBuffer) {
@@ -253,7 +254,7 @@
 
 
             const encoder_config = {
-                codec:'vp09.00.10.08',
+                codec: 'avc1.42001f',
                 width: video.videoWidth*2,
                 height: video.videoHeight*2,
                 bitrate: 1e7,
@@ -262,8 +263,8 @@
 
 
             const init = {
-                output: (chunk) => {
-                    handleEncoded(chunk);
+                output: (chunk, meta) => {
+                    handleEncoded(chunk, meta);
                 },
                 error: (e) => {
                     console.log(e.message);
@@ -283,10 +284,12 @@
                    time: video.currentTime
                });
                pending_outputs +=1;
-               if(frameStack.length > 10) video.pause();
+               if(frameStack.length > 40) video.pause();
                video.requestVideoFrameCallback(decodeLoop);
            }
 
+
+           window.frameStack = frameStack;
            async function encodeLoop() {
                if(frameStack.length ===0 && !video.ended) return video.requestVideoFrameCallback(encodeLoop);
                const { frame, time } = frameStack.shift();
@@ -298,10 +301,16 @@
 
                const upscaled_frame = new VideoFrame(upscaled_bitmap, { timestamp: time*1000*1000});
 
-               frames_processed +=1;
-
                const isKeyFrame = frames_processed %60 ===0;
 
+
+               frames_processed +=1;
+
+
+               pending_outputs --;
+
+
+               console.log(pending_outputs);
                encoder.encode(upscaled_frame, { keyFrame: isKeyFrame});
 
                upscaled_frame.close();
@@ -319,6 +328,8 @@
                     frame: bitmap,
                     time: video.currentTime
                 });
+
+                pending_outputs +=1;
 
                 const audioStream = video.captureStream().getAudioTracks()[0];
                 
@@ -369,35 +380,40 @@
             video.requestVideoFrameCallback(encodeLoop);
 
 
+            video.onended = async function () {
+                if(video.ended && pending_outputs < 1 && !finished) return await onEnd();
+            }
 
-            async function handleEncoded(chunk){
+            async function onEnd() {
 
+                finished = true;
+                await encoder.flush()
+                await audioEncoder.flush();
+                await audioEncoder.close();
+                muxer.finalize();
 
+                console.log("Done");
 
-                muxer.addVideoChunk(chunk);
+                const blob = new Blob([muxer.target.buffer], {type: "video/mp4"});
 
-                pending_outputs --;
-
-                if(video.ended && pending_outputs ===0){
-
-                    finished = true;
-                    await encoder.flush()
-                    await audioEncoder.flush();
-                    await audioEncoder.close();
-                    muxer.finalize();
-
-
-                    const blob = new Blob([muxer.target.buffer], {type: "video/webm"});
-
-                    const url = window.URL.createObjectURL(blob);
+                const url = window.URL.createObjectURL(blob);
 
 
-                    const anchor = document.createElement("a");
-                    anchor.href = url;
-                    anchor.download = "upscaled.webm";
-                    anchor.innerText = "Download me";
-                    document.body.appendChild(anchor);
-                }
+                const anchor = document.createElement("a");
+                anchor.href = url;
+                anchor.download = "upscaled.mp4";
+                anchor.innerText = "Download me";
+                document.body.appendChild(anchor);
+            }
+
+            async function handleEncoded(chunk, meta){
+
+                console.log("Handling encoded chunk");
+                console.log(chunk);
+
+                muxer.addVideoChunk(chunk, meta);
+
+                if(video.ended && pending_outputs < 1 && !finished) return await onEnd();
 
             }
 
