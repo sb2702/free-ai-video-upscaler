@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
     <script src="image-compare-viewer.min.js"></script>
     <link href="image-compare-viewer.min.css" rel="stylesheet">
+    <script src="webm-muxer.js"></script>
     <script src="webm-writer.js"></script>
     <title>Video Upscaler</title>
     <style>
@@ -130,6 +131,9 @@
     let gpu;
 
 
+    console.log("Muxer");
+    console.log(WebMMuxer);
+
     async function main() {
 
         if(!"VideoEncoder" in window) return showUnsupported("Your Browser doesn't support WebCodecs");
@@ -185,6 +189,7 @@
 
             canvas.width = video.videoWidth*2;
             canvas.height = video.videoHeight*2;
+
 /*
             video.width = video.videoWidth*2;
             video.height = video.videoHeight*2;
@@ -201,12 +206,20 @@
 
 
 
-            const videoWriter = await saveFile();
+            const muxer = new WebMMuxer.Muxer({
+                target: new WebMMuxer.ArrayBufferTarget(),
+                video: {
+                    codec: 'V_VP9',
+                    width: video.videoWidth*2,
+                    height: video.videoHeight*2
+                }
+            });
 
+            console.log("Muxer", muxer);
 
 
             const encoder_config = {
-                codec: codec_string,
+                codec:'vp09.00.10.08',
                 width: video.videoWidth*2,
                 height: video.videoHeight*2,
                 bitrate: 1e7,
@@ -248,6 +261,8 @@
 
                const upscaled_bitmap = await createImageBitmap(canvas);
 
+               console.log(time);
+
                const upscaled_frame = new VideoFrame(upscaled_bitmap, { timestamp: time*1000*1000});
 
                frames_processed +=1;
@@ -261,9 +276,22 @@
                if(!(video.ended && frameStack.length ===0) ) await encodeLoop();
            }
 
-            video.requestVideoFrameCallback(decodeLoop);
 
-            video.play();
+            video.requestVideoFrameCallback(async  function () {
+                let bitmap = await createImageBitmap(video);
+                frameStack.push({
+                    frame: bitmap,
+                    time: video.currentTime
+                });
+
+                video.play();
+
+                video.requestVideoFrameCallback(decodeLoop);
+            });
+
+
+
+
 
             video.requestVideoFrameCallback(encodeLoop);
 
@@ -271,18 +299,32 @@
 
             async function handleEncoded(chunk){
 
-                videoWriter.addFrame(chunk);
+                console.log("Handling encoded chunk");
+                console.log(chunk);
+
+                muxer.addVideoChunk(chunk);
 
                 pending_outputs --;
 
                 if(video.ended && pending_outputs ===0){
-                    await videoWriter.complete();
 
-                    console.log("Done");
-                    progress.innerText = `Upscaled video saved as ${destinationFileName}`;
-                    document.getElementById("done").style.display = "block";
-                    writeable.close();
+                    await encoder.flush();
+                    muxer.finalize();
 
+                    console.log("Muxer");
+                    console.log( muxer.target);
+
+                    const blob = new Blob([muxer.target.buffer], {type: "video/webm"});
+
+                    const url = window.URL.createObjectURL(blob);
+
+                    console.log(url);
+
+                    const anchor = document.createElement("a");
+                    anchor.href = url;
+                    anchor.download = "upscaled.webm";
+                    anchor.innerText = "Download me";
+                    document.body.appendChild(anchor);
                 }
 
             }
@@ -293,174 +335,7 @@
         }
 
     }
-/**
-    var setupUpscaler = function (url){
 
-
-        video.src = url;
-        document.getElementById("file-load-panel").style.display = "none";
-        document.getElementById("start-panel").style.display = "block";
-
-
-        video.onloadeddata = function (){
-
-            width = video.videoWidth;
-            height = video.videoHeight;
-
-
-            const upscaler_init_config = {
-                w: width,
-                h: height,
-                renderSize: {w: width*2, h: height*2},
-                canvas: canvas,
-                float_type: "float16",
-                use_webgl1: "false",
-                networkParams: {
-                    name: 'residual_5k_2x',
-                    tag: 'general',
-                    version: '0',
-                },
-                token: "0912c95e-c4e5-47d0-bf26-01b214f01f48"
-            };
-
-           upscaler = (new vectorlyUpscaler.core())
-                .on('load', function () {
-                    console.log("Upscaler initialized");
-                    gl  = document.getElementById("upscaled").getContext("webgl2");
-                    document.getElementById("choose-destination").style.display = "block";
-                    document.getElementById("loading").style.display = "none";
-                })
-                .on('error', function () {
-                    document.getElementById("loading").style.display = "none";
-                    document.getElementById("error").style.display = "block";
-
-                    alert("Failed to initialize AI Upscaler");
-
-                })
-                .on('start', function () {
-                    console.log("Starting upscaling"); })
-                .on('stop', function () {
-                    console.log("Stopping upscaling"); });
-
-            upscaler.load(upscaler_init_config);
-
-
-
-        }
-
-
-
-    }
-
-**/
-
-
-    async function saveFile() {
-
-
-        handle = await window.showSaveFilePicker({
-            startIn: 'videos',
-            suggestedName: destinationFileName,
-            types: [{
-                description: 'Video File',
-                accept: {'video/webm' :['.webm']}
-            }],
-        });
-
-        writeable = await handle.createWritable();
-        const videoWriter = new WebMWriter({
-            fileWriter: writeable,
-            codec: 'VP9',
-            width: width*2,
-            height: height*2
-        });
-
-
-
-        return videoWriter;
-    }
-
-
-    var chooseDestination = function () {
-        saveFile().then(function (videoWriter){
-
-            var framesUpscaled = 0;
-            document.getElementById("choose-destination").style.display = "none";
-
-            let frames = [];
-            var upscaled_frames = [];
-
-
-
-
-            video.play();
-            playing = true;
-
-            video.onended = function (){
-                playing = false;
-            }
-
-            function captureLoop(){
-                video.requestVideoFrameCallback(function () {
-
-                    createImageBitmap(video).then(function (bitmap){
-                        frames.push({bitmap: bitmap, time: video.currentTime});
-                    });
-
-                    captureLoop();
-                });
-            }
-
-
-            function renderLoop(){
-
-                if(frames.length < 1) return  setTimeout(renderLoop, 30);
-
-                let {bitmap, time} = frames.shift();
-
-                upscaler.setInput(bitmap); // Sets input element
-                upscaler.render(); // Renders to canvas
-                gl.finish();
-
-                createImageBitmap(canvas).then(function (upscaled_bitmap){
-
-
-
-
-
-                    pending_outputs++;
-
-
-                    framesUpscaled++;
-
-
-
-
-
-                    renderLoop();
-
-                });
-
-
-            }
-
-
-
-            captureLoop();
-
-            renderLoop();
-
-
-
-
-
-
-        });
-    };
-
-    var refresh = function () {
-        location.reload();
-    }
 
 
 
