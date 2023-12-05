@@ -131,9 +131,6 @@
     let gpu;
 
 
-    console.log("Muxer");
-    console.log(WebMMuxer);
-
     async function main() {
 
         if(!"VideoEncoder" in window) return showUnsupported("Your Browser doesn't support WebCodecs");
@@ -181,11 +178,6 @@
                 canvas: canvas
             });
 
-            console.log(video.videoWidth);
-
-            console.log(video);
-
-            console.log("Loaded video");
 
             canvas.width = video.videoWidth*2;
             canvas.height = video.videoHeight*2;
@@ -217,14 +209,10 @@
                 },
                 audio: {
                     codec:  'A_OPUS',
-                    numberOfChannels: 1,
+                    numberOfChannels: 2,
                     sampleRate: 48000
                 },
             });
-
-            console.log("Muxer", muxer);
-
-
 
 
 
@@ -240,7 +228,7 @@
             audioEncoder.configure({
                 codec: 'opus',
                 sampleRate: 48000,
-                numberOfChannels: 1
+                numberOfChannels: 2
             })
 
 
@@ -307,7 +295,6 @@
 
                const upscaled_bitmap = await createImageBitmap(canvas);
 
-               console.log(time);
 
                const upscaled_frame = new VideoFrame(upscaled_bitmap, { timestamp: time*1000*1000});
 
@@ -334,11 +321,11 @@
                 });
 
                 const audioStream = video.captureStream().getAudioTracks()[0];
-
+                
                 const audioContext = new AudioContext();
                 const source  = audioContext.createMediaStreamSource(new MediaStream([audioStream]));
 
-                const processor = audioContext.createScriptProcessor(4096, 1, 1);
+                const processor = audioContext.createScriptProcessor(4096, 2, 2);
 
                 source.connect(processor);
                 processor.connect(audioContext.destination);
@@ -348,16 +335,12 @@
 
                     const inputBuffer = e.inputBuffer;
 
-                    console.log("Playback time");
-                    console.log(e.playbackTime);
-
                     if(!initPlaybackTime) initPlaybackTime = e.playbackTime;
 
                     const numberOfChannels = inputBuffer.numberOfChannels;
                     const numberOfFrames = inputBuffer.length;
                     const sampleRate = inputBuffer.sampleRate;
 
-                    console.log(inputBuffer);
 
                     // Create an AudioData object
                     let audioData = new AudioData({
@@ -389,8 +372,7 @@
 
             async function handleEncoded(chunk){
 
-                console.log("Handling encoded chunk");
-                console.log(chunk);
+
 
                 muxer.addVideoChunk(chunk);
 
@@ -404,14 +386,11 @@
                     await audioEncoder.close();
                     muxer.finalize();
 
-                    console.log("Muxer");
-                    console.log( muxer.target);
 
                     const blob = new Blob([muxer.target.buffer], {type: "video/webm"});
 
                     const url = window.URL.createObjectURL(blob);
 
-                    console.log(url);
 
                     const anchor = document.createElement("a");
                     anchor.href = url;
