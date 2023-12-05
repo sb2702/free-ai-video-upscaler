@@ -185,15 +185,6 @@
 
             video.volume = 0.01;
 
-/*
-            video.width = video.videoWidth*2;
-            video.height = video.videoHeight*2;
-
-            document.getElementById('image-compare').style.width = `${video.videoWidth*2}px`;
-            document.getElementById('image-compare').style.height = `${video.videoHeight*2}px`;
-
-
-*/
             document.getElementById('start-panel').style.display = "block";
 
             // View them side by side
@@ -309,8 +300,6 @@
 
                pending_outputs --;
 
-
-               console.log(pending_outputs);
                encoder.encode(upscaled_frame, { keyFrame: isKeyFrame});
 
                upscaled_frame.close();
@@ -392,7 +381,6 @@
                 await audioEncoder.close();
                 muxer.finalize();
 
-                console.log("Done");
 
                 const blob = new Blob([muxer.target.buffer], {type: "video/mp4"});
 
@@ -407,9 +395,6 @@
             }
 
             async function handleEncoded(chunk, meta){
-
-                console.log("Handling encoded chunk");
-                console.log(chunk);
 
                 muxer.addVideoChunk(chunk, meta);
 
