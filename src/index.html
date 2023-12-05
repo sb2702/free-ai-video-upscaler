@@ -80,12 +80,6 @@
     <input type="file" onchange="loadVideo(this)" accept="video/mp4,video/webm">
 </div>
 
-
- <div id="file-save-panel" class="panel">
-    <input type="button" value="FileSave" onclick="save()">
-</div>
-
-
 <div id="start-panel" class="panel">
 
 
@@ -96,10 +90,7 @@
 
     <p id="loading">Loading...</p>
     <p id="error">An error ocurred while upscaling</p>
-    <div  id="choose-destination" style="display: none;">
-        <p>Choose where to save the video</p>
-        <input  type="button" value="Choose Destination" onclick="chooseDestination()">
-    </div>
+    <div  id="download" style="display: none;"></div>
 
     <div id="info"></div>
 
@@ -113,23 +104,18 @@
 
 <script>
 
-    let handle;
-    let writeable;
-    let codec_string = "vp09.00.10.08";
     const video  =  document.getElementById("video");
     const canvas = document.getElementById("upscaled")
-    let width;
-    let height;
-    let destinationFileName = "myUpscaledVideo.webm";
-    let playing = false;
+
+    let destinationFileName = "upscaled.mp4";;
+    let finished;
 
     var pending_outputs = 0;
     let frames_processed = 0;
-    let progress  = document.getElementById("info");
+    const progress  = document.getElementById("info");
 
     let gpu;
-
-
+    
     async function main() {
 
         if(!"VideoEncoder" in window) return showUnsupported("Your Browser doesn't support WebCodecs");
@@ -160,7 +146,7 @@
             setupUpscaler(url);
         }
 
-        destinationFileName = file.name.split(".")[0] + "-upscaled.webm";
+        destinationFileName = file.name.split(".")[0] + "-upscaled.mp4";
         reader.readAsDataURL(file);
 
     }
@@ -387,7 +373,7 @@
 
                 const anchor = document.createElement("a");
                 anchor.href = url;
-                anchor.download = "upscaled.mp4";
+                anchor.download = destinationFileName;
                 anchor.innerText = "Download me";
                 document.body.appendChild(anchor);
             }
