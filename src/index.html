@@ -91,7 +91,7 @@
 
 
     <div id="image-compare">
-        <video id="video" width="640" height="360" muted></video>
+        <video id="video" width="640" height="360"></video>
         <canvas id="upscaled" ></canvas>
     </div>
 
@@ -190,6 +190,8 @@
             canvas.width = video.videoWidth*2;
             canvas.height = video.videoHeight*2;
 
+            video.volume = 0.01;
+
 /*
             video.width = video.videoWidth*2;
             video.height = video.videoHeight*2;
@@ -255,6 +257,7 @@
                     for (let frame = 0; frame < numberOfFrames; frame++) {
                         outputArray[frame * numberOfChannels + channel] = inputData[frame];
                     }
+
                 }
 
                 return outputArray.buffer;
