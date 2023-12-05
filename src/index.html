@@ -212,10 +212,53 @@
                     codec: 'V_VP9',
                     width: video.videoWidth*2,
                     height: video.videoHeight*2
-                }
+                },
+                audio: {
+                    codec:  'A_OPUS',
+                    numberOfChannels: 1,
+                    sampleRate: 48000
+                },
             });
 
             console.log("Muxer", muxer);
+
+
+
+
+
+            const audioEncoder = new AudioEncoder({
+                output: function (encodedAudioChunk) {
+                    muxer.addAudioChunk(encodedAudioChunk);
+                },
+                error: (e)=> console.log(e)
+            })
+
+            let finished= false;
+
+            audioEncoder.configure({
+                codec: 'opus',
+                sampleRate: 48000,
+                numberOfChannels: 1
+            })
+
+
+
+            function copyAudioData(inputBuffer) {
+                // This function should copy data from inputBuffer into a new ArrayBuffer
+                // The implementation depends on how you want to handle the audio data
+                const numberOfChannels = inputBuffer.numberOfChannels;
+                const numberOfFrames = inputBuffer.length;
+                const outputArray = new Float32Array(numberOfChannels * numberOfFrames);
+
+                for (let channel = 0; channel < numberOfChannels; channel++) {
+                    const inputData = inputBuffer.getChannelData(channel);
+                    for (let frame = 0; frame < numberOfFrames; frame++) {
+                        outputArray[frame * numberOfChannels + channel] = inputData[frame];
+                    }
+                }
+
+                return outputArray.buffer;
+            }
 
 
             const encoder_config = {
@@ -277,12 +320,56 @@
            }
 
 
+           let initPlaybackTime = null;
+
+
             video.requestVideoFrameCallback(async  function () {
                 let bitmap = await createImageBitmap(video);
                 frameStack.push({
                     frame: bitmap,
                     time: video.currentTime
                 });
+
+                const audioStream = video.captureStream().getAudioTracks()[0];
+
+                const audioContext = new AudioContext();
+                const source  = audioContext.createMediaStreamSource(new MediaStream([audioStream]));
+
+                const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+                processor.onaudioprocess = function (e) {
+
+                    if(finished) return;
+
+                    const inputBuffer = e.inputBuffer;
+
+                    console.log("Playback time");
+                    console.log(e.playbackTime);
+
+                    if(!initPlaybackTime) initPlaybackTime = e.playbackTime;
+
+                    const numberOfChannels = inputBuffer.numberOfChannels;
+                    const numberOfFrames = inputBuffer.length;
+                    const sampleRate = inputBuffer.sampleRate;
+
+                    console.log(inputBuffer);
+
+                    // Create an AudioData object
+                    let audioData = new AudioData({
+                        format: 'f32', // assuming the audio data is in 32-bit float format
+                        sampleRate: sampleRate,
+                        numberOfFrames: numberOfFrames,
+                        numberOfChannels: numberOfChannels,
+                        timestamp: (e.playbackTime -initPlaybackTime)* sampleRate, // or other appropriate timestamp
+                        data: copyAudioData(inputBuffer) // You'll need to copy data from inputBuffer
+                    });
+
+                    audioEncoder.encode(audioData);
+                }
+
+
 
                 video.play();
 
@@ -308,7 +395,10 @@
 
                 if(video.ended && pending_outputs ===0){
 
-                    await encoder.flush();
+                    finished = true;
+                    await encoder.flush()
+                    await audioEncoder.flush();
+                    await audioEncoder.close();
                     muxer.finalize();
 
                     console.log("Muxer");
