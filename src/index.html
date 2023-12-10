@@ -82,7 +82,10 @@
 <p>This free tool applies an <a href="https://github.com/sb2702/websr">AI Upscaling algorithm</a> on your video, right in the browser. It is much faster, though not as powerful, as other popular AI Upscaling software.</p>
 
 <div id="unsupported-panel" class="panel" >
-    <p>Your browser doesn't have the functionality needed for AI Upscaling. Please use the latest version of Google Chrome. If you are currently using Chrome, open  <pre>chrome://flags/#enable-experimental-web-platform-features</pre> in a new tab, and enable "Experimental Web Platform features". When you come back to this page, you should be able to upload a video. If you think there's still an issue, contact us at team@vectorly.io</p>
+    <p style="text-align: left;">
+        Your browser is missing a required feature for this tool:
+    </p>
+    <div class="alert alert-warning" role="alert" id="unsupported-message"></div>
 </div>
 
 <div id="file-load-panel" class="panel" >
@@ -149,7 +152,12 @@
 
     main();
 
-    function showUnsupported() {
+    function showUnsupported(text) {
+        console.log("Unsupported");
+        $("#file-load-panel").hide();
+        $("#start-panel").hide();
+        $("#unsupported-panel").show();
+        $("#unsupported-message").text(text);
 
     }
 
