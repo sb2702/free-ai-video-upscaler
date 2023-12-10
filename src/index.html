@@ -5,8 +5,6 @@
     <meta charset="UTF-8">
     <meta >
     <script src="websr.js"> </script>
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;400;800&display=swap" rel="stylesheet">
@@ -17,11 +15,11 @@
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script src="mp4-muxer.js"></script>
-    <title>Video Upscaler</title>
+    <title>Free AI Video Upscaler</title>
     <style>
 
         body{
-            font-family:  'Manrope', 'Open Sans', sans-serif;
+            font-family:  'Manrope', sans-serif;
         }
 
         h1{
@@ -95,12 +93,26 @@
             margin: auto;
             display: block;
         }
+        #missing-component{
+            font-family: monospace;
+            background: #e5e5e5;
+            border-radius: 8px;
+            padding: 5px 10px;
+            margin: 0 5px;
+            font-size: 1.25rem;
+        }
         #input-button{
             margin: 4rem auto;
             padding: 10px 15px;
             border-radius: 8px;
             font-weight: 800;
             display: block;
+        }
+
+        #unsupported-panel{
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
     </style>
 </head>
@@ -113,10 +125,7 @@
 <p id="hero-text">This free tool applies an <a href="https://github.com/sb2702/websr">AI Upscaling algorithm</a> on your video, right in the browser. It is much faster, though not as powerful, as other popular AI Upscaling software.</p>
 
 <div id="unsupported-panel" class="panel" >
-    <p style="text-align: left;">
-        Your browser is missing a required feature for this tool:
-    </p>
-    <div class="alert alert-warning" role="alert" id="unsupported-message"></div>
+    <p class="panel-text">Your browser does not support <span id="missing-component"></span>, a required browser feature for this tool.</p>
 </div>
 
 <div id="file-load-panel" class="panel" >
@@ -171,15 +180,13 @@
 
     async function main() {
 
-        if(!"VideoEncoder" in window) return showUnsupported("Your Browser doesn't support WebCodecs");
+        if(!"VideoEncoder" in window) return showUnsupported("WebCodecs");
 
         gpu = await WebSR.initWebGPU();
 
-    //    if(!gpu) return showUnsupported("Your Browser doesn't support WebGPU");
+        if(!gpu) return showUnsupported("WebGPU");
 
         window.chooseFile =  chooseFile;
-
-        window.loadVideo = inputHandler;
 
     }
     function chooseFile(e) {
@@ -196,7 +203,7 @@
         $("#file-load-panel").hide();
         $("#start-panel").hide();
         $("#unsupported-panel").show();
-        $("#unsupported-message").text(text);
+        $("#missing-component").text(text);
 
     }
 
