@@ -39,10 +39,13 @@
             width: 640px;
             margin: auto;
             background: #F5F5F5;
+            border-radius: 1.25rem;
+            height: 22.5rem;
             padding: 20px 30px;
             -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
             -moz-box-sizing: border-box;    /* Firefox, other Gecko */
             box-sizing: border-box;         /* Opera/IE 8+ */
+            border: .06rem solid #c8c8d5;
         }
         p{
             width: 640px;
@@ -82,6 +85,12 @@
             font-size: 1.25rem;
             margin: 3em auto;
         }
+        .panel-text{
+            width: 100%;
+            font-size: 1.5rem;
+            text-align: center;
+            margin: 20px auto;
+        }
     </style>
 </head>
 
@@ -89,7 +98,7 @@
 
 
 
-<h1>Free AI Video Upscaler</h1>
+<h1 id="title">Free AI Video Upscaler</h1>
 <p id="hero-text">This free tool applies an <a href="https://github.com/sb2702/websr">AI Upscaling algorithm</a> on your video, right in the browser. It is much faster, though not as powerful, as other popular AI Upscaling software.</p>
 
 <div id="unsupported-panel" class="panel" >
@@ -100,7 +109,7 @@
 </div>
 
 <div id="file-load-panel" class="panel" >
-    <p>Choose a video to upscale</p>
+    <p class="panel-text">Choose a video to upscale</p>
     <input type="file" onchange="loadVideo(this)" accept="video/mp4,video/webm">
 </div>
 
@@ -155,7 +164,7 @@
 
         gpu = await WebSR.initWebGPU();
 
-        if(!gpu) return showUnsupported("Your Browser doesn't support WebGPU");
+    //    if(!gpu) return showUnsupported("Your Browser doesn't support WebGPU");
 
         window.loadVideo = inputHandler;
 
