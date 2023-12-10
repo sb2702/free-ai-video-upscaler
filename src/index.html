@@ -7,6 +7,9 @@
     <script src="websr.js"> </script>
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;400;800&display=swap" rel="stylesheet">
     <script src="image-compare-viewer.min.js"></script>
     <link href="image-compare-viewer.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
@@ -18,14 +21,16 @@
     <style>
 
         body{
-            font-family: 'Open Sans', sans-serif;
+            font-family:  'Manrope', 'Open Sans', sans-serif;
         }
 
         h1{
             width: 100%;
             text-align: center;
-            color: #666;
-            margin: 20px 0;
+            color: #232554;
+            margin: 4rem 0;
+            font-weight: 800;
+            font-size: 4rem;
         }
 
 
@@ -71,6 +76,12 @@
             margin: auto;
             width: fit-content;
         }
+
+        #hero-text{
+            color: #232554;
+            font-size: 1.25rem;
+            margin: 3em auto;
+        }
     </style>
 </head>
 
@@ -79,7 +90,7 @@
 
 
 <h1>Free AI Video Upscaler</h1>
-<p>This free tool applies an <a href="https://github.com/sb2702/websr">AI Upscaling algorithm</a> on your video, right in the browser. It is much faster, though not as powerful, as other popular AI Upscaling software.</p>
+<p id="hero-text">This free tool applies an <a href="https://github.com/sb2702/websr">AI Upscaling algorithm</a> on your video, right in the browser. It is much faster, though not as powerful, as other popular AI Upscaling software.</p>
 
 <div id="unsupported-panel" class="panel" >
     <p style="text-align: left;">
