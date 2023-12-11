@@ -4,7 +4,8 @@
   "description": "Free tool to upscale videos in the browser",
   "main": "src/main.js",
   "scripts": {
-    "build": "webpack"
+    "build": "webpack",
+    "serve": "webpack-dev-server"
   },
   "repository": {
     "type": "git",
