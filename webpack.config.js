@@ -23,6 +23,12 @@ module.exports = {
                     loader: "babel-loader"
                 },
             },
+
+            {
+                test: /\.css$/i,
+                use: ["style-loader", "css-loader"],
+            }
+
         ],
 
     },
@@ -47,7 +53,7 @@ module.exports = {
 
     ],
     resolve: {
-        extensions: [".ts", ".tsx", ".js"]
+        extensions: [".ts", ".tsx", ".js",  ".css"]
     },
 
     devServer: {
