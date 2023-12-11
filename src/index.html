@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;400;800&display=swap" rel="stylesheet">
-    <link rel="icon" href="fullscreen.svg">
+    <link rel="icon" href="logo.svg">
     <script src="image-compare-viewer.min.js" defer></script>
     <link href="image-compare-viewer.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
@@ -54,6 +54,9 @@
 
         video {
             margin: -20px -30px 10px -30px;
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
         }
 
         #info{
@@ -133,6 +136,11 @@
             font-size: 0.85rem;
             padding: 20px;
         }
+        #full-screen{
+            position: absolute;
+            z-index: 5;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -167,7 +175,10 @@
     <div id="image-compare">
         <video id="video" width="640" height="360"></video>
         <canvas id="upscaled" ></canvas>
+
     </div>
+    <img src="full-screen.svg" width="15" height="15" id="full-screen" onclick="fullScreenPreview()">
+
 
     <br>
 
@@ -181,14 +192,13 @@
     <div id="preview">
         <p style="width: 100%;">⬆ &nbsp Preview &nbsp ⬆</p>
         <button  type="button" class="btn btn-primary" id="start" onclick="initRecording()">Start upscaling &nbsp
-
-            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10" x="0" y="0" viewBox="0 0 163.861 163.861" style="enable-background:new 0 0 512 512" xml:space="preserve" class=""><g><path d="M34.857 3.613C20.084-4.861 8.107 2.081 8.107 19.106v125.637c0 17.042 11.977 23.975 26.75 15.509L144.67 97.275c14.778-8.477 14.778-22.211 0-30.686L34.857 3.613z" fill="#ffffff" opacity="1" data-original="#000000" class=""></path></g></svg>
+            <img src="play.svg" width="10" height="10">
         </button>
     </div>
 
 
     <a id="download-link" href=""  style=""><button  type="button" class="btn btn-primary" id="download">Download
-        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="20" height="20" x="0" y="0" viewBox="0 0 32 32" style="enable-background:new 0 0 512 512" xml:space="preserve" class=""><g><path d="M28 24v-4a1 1 0 0 0-2 0v4a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-4a1 1 0 0 0-2 0v4a3 3 0 0 0 3 3h18a3 3 0 0 0 3-3zm-6.38-5.22-5 4a1 1 0 0 1-1.24 0l-5-4a1 1 0 0 1 1.24-1.56l3.38 2.7V6a1 1 0 0 1 2 0v13.92l3.38-2.7a1 1 0 1 1 1.24 1.56z" data-name="Download" fill="#ffffff" opacity="1" data-original="#000000"></path></g></svg>
+        <img src="download-icon.svg" width="20" height="20">
     </button></a>
 
     <input id="done" type="button" value="Upscale another video" onclick="refresh()">
