@@ -38,10 +38,8 @@ module.exports = {
         }),
         new CopyWebpackPlugin( {
             patterns: [
-                { from: "src/image-compare-viewer.min.css", to: path.basename('image-compare-viewer.min.css') },
-                { from: "src/image-compare-viewer.min.js", to: path.basename('image-compare-viewer.min.js') },
-                { from: "src/download-icon.svg", to: path.basename('download-icon.svg') },
-                { from: "src/cnn-2x-s.json", to: path.basename('cnn-2x-s.json') },
+                { from: "src/lib/image-compare-viewer.min.css", to: path.basename('image-compare-viewer.min.css') },
+                { from: "src/lib/image-compare-viewer.min.js", to: path.basename('image-compare-viewer.min.js') }
 
             ]
         })
