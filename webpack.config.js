@@ -44,8 +44,6 @@ module.exports = {
         }),
         new CopyWebpackPlugin( {
             patterns: [
-                { from: "src/lib/image-compare-viewer.min.css", to: path.basename('image-compare-viewer.min.css') },
-                { from: "src/lib/image-compare-viewer.min.js", to: path.basename('image-compare-viewer.min.js') },
                 { from: "src/img/*.svg", to: path.basename('[name].svg') },
 
             ]
