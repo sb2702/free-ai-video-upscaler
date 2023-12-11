@@ -38,8 +38,6 @@ module.exports = {
         }),
         new CopyWebpackPlugin( {
             patterns: [
-                { from: "src/websr.js", to: path.basename('websr.js') },
-                { from: "src/mp4-muxer.js", to: path.basename('mp4-muxer.js') },
                 { from: "src/image-compare-viewer.min.css", to: path.basename('image-compare-viewer.min.css') },
                 { from: "src/image-compare-viewer.min.js", to: path.basename('image-compare-viewer.min.js') },
                 { from: "src/download-icon.svg", to: path.basename('download-icon.svg') },
