@@ -62,7 +62,7 @@
     </div>
 
 
-    <a id="download-link" href=""   x-show="$store.state === 'complete'"><button  type="button" class="btn btn-primary" id="download">Download
+    <a id="download-link" href=""  x-bind:href="$store.download_url"  x-bind:download="$store.download_name"  x-show="$store.state === 'complete'"><button  type="button" class="btn btn-primary" id="download">Download
         <img src="download-icon.svg" width="20" height="20">
     </button></a>
 
