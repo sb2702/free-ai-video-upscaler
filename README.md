@@ -1,6 +1,6 @@
 # Free AI Video Upscaler
 
-A simple, quick and free no-nonsense tool for upscaling video with AI upscaling algorithms like [Anime4K](https://github.com/bloc97/Anime4K) - no signups, no downloads just choose a video and download your upscaled video after it's done processing.
+A simple, quick and free no-nonsense tool for upscaling video with AI upscaling algorithms like [Anime4K](https://github.com/bloc97/Anime4K) right in your browser- no signups, no downloads just choose a video and download your upscaled video after it's done processing.
 
 You can get started at 👉 https://free.upscaler.video/ 👈
 
