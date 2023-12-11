@@ -20,17 +20,17 @@
     gtag('config', 'G-QE7MR4DVTV');
 </script>
 
-<body >
+<body x-data="{}">
 
 
 <h1 id="title">Free AI Video Upscaler</h1>
-<p id="hero-text">This free tool applies an <a href="https://github.com/sb2702/websr">AI Upscaling algorithm</a> on your video, right in the browser. It is much faster, though not as powerful, as other popular AI Upscaling software.</p>
+<p id="hero-text" x-show="$store.state === 'init'">This free tool applies an <a href="https://github.com/sb2702/websr">AI Upscaling algorithm</a> on your video, right in the browser. It is much faster, though not as powerful, as other popular AI Upscaling software.</p>
 
-<div id="unsupported-panel" class="panel" >
-    <p class="panel-text">Your browser does not support <span id="missing-component"></span>, a required browser feature for this tool.</p>
+<div id="unsupported-panel" class="panel"   x-show="$store.state === 'unsupported'">
+    <p class="panel-text">Your browser does not support <span id="missing-component" x-text="$store.component"></span>, a required browser feature for this tool.</p>
 </div>
 
-<div id="file-load-panel" class="panel" >
+<div id="file-load-panel" class="panel"  x-show="$store.state === 'init'">
     <p class="panel-text">Choose a video to upscale</p>
     <button type="button" class="btn btn-primary"  id="input-button" onclick="chooseFile(this)">Choose a video file</button>
 </div>
