@@ -35,39 +35,38 @@
     <button type="button" class="btn btn-primary"  id="input-button" onclick="chooseFile(this)">Choose a video file</button>
 </div>
 
-<div id="start-panel" class="panel">
-
-
+<div id="start-panel" class="panel" x-show="$store.state === 'preview' || $store.state === 'processing' || $store.state === 'complete'">
     <div id="image-compare">
         <video id="video" width="640" height="360"></video>
         <canvas id="upscaled" ></canvas>
 
     </div>
-    <img src="full-screen.svg" width="15" height="15" id="full-screen" onclick="fullScreenPreview()">
+
+    <img src="full-screen.svg" width="15" height="15" id="full-screen" onclick="fullScreenPreview()" x-show="$store.state === 'preview'">
 
 
     <br>
 
-    <div id="info">
-        <p id="loading">Upscaling...</p>
-        <div class="progress" id="progress">
-            <div  class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
-        </div>
-    </div>
-
-    <div id="preview">
+    <div id="preview"  x-show="$store.state === 'preview'">
         <p style="width: 100%;">⬆ &nbsp Preview &nbsp ⬆</p>
         <button  type="button" class="btn btn-primary" id="start" onclick="initRecording()">Start upscaling &nbsp
             <img src="play.svg" width="10" height="10">
         </button>
     </div>
 
+    <div id="info"  x-show="$store.state === 'processing'">
+        <p id="loading">Upscaling...</p>
+        <div class="progress" id="progress">
+            <div  class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"  x-bind:style="{width: $store.progress + '%'}" x-bind:aria-valuenow="$store.progress" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
+        </div>
+    </div>
 
-    <a id="download-link" href=""  style=""><button  type="button" class="btn btn-primary" id="download">Download
+
+    <a id="download-link" href=""   x-show="$store.state === 'complete'"><button  type="button" class="btn btn-primary" id="download">Download
         <img src="download-icon.svg" width="20" height="20">
     </button></a>
 
-    <input id="done" type="button" value="Upscale another video" onclick="refresh()">
+
 </div>
 
 
