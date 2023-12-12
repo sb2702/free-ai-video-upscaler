@@ -195,17 +195,6 @@ async function initRecording(){
         pending_outputs +=1;
         if(frameStack.length > 40) video.pause();
 
-
-
-        if(frames_processed === 100){
-            console.log("Frame = 100");
-            console.log(frames_processed);
-            video.pause();
-            setTimeout(function () {
-                video.play();
-            }, 5000);
-        }
-
         video.requestVideoFrameCallback(decodeLoop);
 
 
@@ -283,14 +272,12 @@ async function initRecording(){
     processor.onaudioprocess = function (e) {
 
         if(finished) return;
-        
+
         if(video.paused) return;
 
         const inputBuffer = e.inputBuffer;
 
         if(!initPlaybackTime) initPlaybackTime =video.currentTime;
-
-        //console.log(e.playbackTime);
 
         const numberOfChannels = inputBuffer.numberOfChannels;
         const numberOfFrames = inputBuffer.length;
