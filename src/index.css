@@ -86,6 +86,15 @@ button{
     margin: 0 5px;
     font-size: 1.25rem;
 }
+
+.monospace{
+    font-family: monospace;
+    background: #e5e5e5;
+    border-radius: 8px;
+    padding: 5px 10px;
+    margin: 0 5px;
+}
+
 #input-button{
     margin: 4rem auto;
     padding: 10px 15px;

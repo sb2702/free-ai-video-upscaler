@@ -1,5 +1,5 @@
 import WebSR from  '@websr/websr';
-import { Muxer, ArrayBufferTarget } from 'mp4-muxer';
+import { Muxer, ArrayBufferTarget, FileSystemWritableFileStreamTarget } from 'mp4-muxer';
 import weights from './cnn-2x-s.json'
 import Alpine from 'alpinejs'
 import ImageCompare from './lib/image-compare-viewer.min';
@@ -8,10 +8,12 @@ import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css";
 import "./lib/image-compare-viewer.min.css"
+import {max} from "@popperjs/core/lib/utils/math";
 
 
 const video  =  document.getElementById("video");
 const canvas = document.getElementById("upscaled");
+let download_name;
 
 let gpu;
 let websr;
@@ -58,7 +60,8 @@ function loadVideo(input){
         setupPreview(url);
     }
 
-    Alpine.store('download_name',  file.name.split(".")[0] + "-upscaled.mp4");
+    download_name = file.name.split(".")[0] + "-upscaled.mp4";
+    Alpine.store('download_name',  download_name);
     reader.readAsDataURL(file);
 
 }
@@ -123,6 +126,16 @@ async function setupPreview(url) {
 
 async function initRecording(){
 
+    let bitrate = getBitrate();
+
+    const max_duration = 100/(bitrate/(8*1024*1024));
+
+    let writer;
+
+    if(video.duration > max_duration){
+        writer = await showFilePicker();
+    }
+
     Alpine.store('state', 'processing');
 
     let pending_outputs = 0;
@@ -131,8 +144,10 @@ async function initRecording(){
 
     video.volume = 0.01;
 
+    const target = writer ? new FileSystemWritableFileStreamTarget(writer) : ArrayBufferTarget();
+
     const muxer = new Muxer({
-        target: new ArrayBufferTarget(),
+        target: target,
         video: {
             codec: 'avc',
             width: video.videoWidth*2,
@@ -173,7 +188,7 @@ async function initRecording(){
 
 
      // Adaptive scaling
-     let bitrate = 1e7 * (video.videoWidth*video.videoHeight*4)/(1280*720);
+
 
     videoEncoder.configure({
         codec: 'avc1.42003e',
@@ -316,9 +331,13 @@ async function initRecording(){
         muxer.finalize();
 
 
-        const blob = new Blob([muxer.target.buffer], {type: "video/mp4"});
+        if(writer){
+            await writer.close();
+        } else{
+            const blob = new Blob([muxer.target.buffer], {type: "video/mp4"});
+            Alpine.store('download_url', window.URL.createObjectURL(blob));
+        }
 
-        Alpine.store('download_url', window.URL.createObjectURL(blob));
 
 
     }
@@ -332,6 +351,25 @@ async function initRecording(){
     }
 
 
+}
+
+function getBitrate() {
+
+    return 1e7 * (video.videoWidth*video.videoHeight*4)/(1280*720);
+}
+
+async function showFilePicker(){
+    const handle = await window.showSaveFilePicker({
+        startIn: 'videos',
+        suggestedName: download_name,
+        types: [{
+            description: 'Video File',
+            accept: {'video/mp4' :['.mp4']}
+        }],
+    });
+
+
+    return  await handle.createWritable();
 }
 
 
