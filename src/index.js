@@ -170,11 +170,16 @@ async function initRecording(){
         }
     });
 
+
+
+     // Adaptive scaling
+     let bitrate = 1e7 * (video.videoWidth*video.videoHeight*4)/(1280*720);
+
     videoEncoder.configure({
-        codec: 'avc1.42001f',
+        codec: 'avc1.42003e',
         width: video.videoWidth*2,
         height: video.videoHeight*2,
-        bitrate: 1e7,
+        bitrate: bitrate,
         framerate: 30,
     });
 
@@ -189,7 +194,22 @@ async function initRecording(){
         });
         pending_outputs +=1;
         if(frameStack.length > 40) video.pause();
+
+
+
+        if(frames_processed === 100){
+            console.log("Frame = 100");
+            console.log(frames_processed);
+            video.pause();
+            setTimeout(function () {
+                video.play();
+            }, 5000);
+        }
+
         video.requestVideoFrameCallback(decodeLoop);
+
+
+
     }
 
 
@@ -216,6 +236,8 @@ async function initRecording(){
         videoEncoder.encode(upscaled_frame, { keyFrame: isKeyFrame});
 
         upscaled_frame.close();
+
+
 
         if(!(video.ended && frameStack.length ===0) ) await encodeLoop();
     }
@@ -261,10 +283,14 @@ async function initRecording(){
     processor.onaudioprocess = function (e) {
 
         if(finished) return;
+        
+        if(video.paused) return;
 
         const inputBuffer = e.inputBuffer;
 
-        if(!initPlaybackTime) initPlaybackTime = e.playbackTime;
+        if(!initPlaybackTime) initPlaybackTime =video.currentTime;
+
+        //console.log(e.playbackTime);
 
         const numberOfChannels = inputBuffer.numberOfChannels;
         const numberOfFrames = inputBuffer.length;
@@ -277,7 +303,7 @@ async function initRecording(){
             sampleRate: sampleRate,
             numberOfFrames: numberOfFrames,
             numberOfChannels: numberOfChannels,
-            timestamp: (e.playbackTime -initPlaybackTime)* sampleRate, // or other appropriate timestamp
+            timestamp: (video.currentTime -initPlaybackTime)* sampleRate, // or other appropriate timestamp
             data: copyAudioData(inputBuffer) // You'll need to copy data from inputBuffer
         });
 
