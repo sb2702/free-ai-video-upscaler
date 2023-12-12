@@ -337,7 +337,7 @@ async function initRecording(){
 
     async function onEnd() {
 
-        Alpine.store('state', 'complete');
+        Alpine.store('progress', 100);
 
         finished = true;
         await videoEncoder.flush()
@@ -351,6 +351,8 @@ async function initRecording(){
             const blob = new Blob([muxer.target.buffer], {type: "video/mp4"});
             Alpine.store('download_url', window.URL.createObjectURL(blob));
         }
+
+        Alpine.store('state', 'complete');
 
 
 
