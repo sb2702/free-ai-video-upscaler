@@ -56,7 +56,7 @@ video {
     display: flex;
 }
 
-#start{
+.start{
     position: relative;
     margin: auto;
     width: fit-content;

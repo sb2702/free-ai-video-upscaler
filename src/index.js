@@ -83,6 +83,10 @@ async function setupPreview(url) {
         const fullScreenButton = document.getElementById('full-screen');
         const imageCompare = document.getElementById('image-compare');
 
+
+
+
+
         Alpine.store('state', 'preview');
 
         // View them side by side
@@ -110,6 +114,16 @@ async function setupPreview(url) {
             }
         });
 
+        let bitrate = getBitrate();
+        const max_duration = 3500/(bitrate/(8*1024*1024));
+
+        if(video.duration > max_duration){
+            Alpine.store('target', 'writer');
+        } else {
+            Alpine.store('target', 'blob');
+        }
+
+
         async function fullScreenPreview(e) {
             imageCompare.requestFullscreen();
             canvas.style.width = `${window.innerWidth}px`;
@@ -128,7 +142,7 @@ async function initRecording(){
 
     let bitrate = getBitrate();
 
-    const max_duration = 100/(bitrate/(8*1024*1024));
+    const max_duration = 3500/(bitrate/(8*1024*1024));
 
     let writer;
 
@@ -144,7 +158,7 @@ async function initRecording(){
 
     video.volume = 0.01;
 
-    const target = writer ? new FileSystemWritableFileStreamTarget(writer) : ArrayBufferTarget();
+    const target = writer ? new FileSystemWritableFileStreamTarget(writer) : new ArrayBufferTarget();
 
     const muxer = new Muxer({
         target: target,

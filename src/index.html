@@ -49,7 +49,12 @@
 
     <div id="preview"  x-show="$store.state === 'preview'">
         <p style="width: 100%;">⬆ &nbsp Preview &nbsp ⬆</p>
-        <button  type="button" class="btn btn-primary" id="start" onclick="initRecording()">Start upscaling &nbsp
+
+        <button  type="button" class="btn btn-primary start"  onclick="initRecording()" x-show="$store.target === 'writer'">Choose output location &nbsp
+            <img src="folder.svg" width="10" height="10">
+        </button>
+
+        <button  type="button" class="btn btn-primary start"  onclick="initRecording()"  x-show="$store.target === 'blob'">Start upscaling &nbsp
             <img src="play.svg" width="10" height="10">
         </button>
     </div>
@@ -64,12 +69,12 @@
 
     <div id="download-link"  x-show="$store.state === 'complete'">
 
-        <div style="margin: auto; display: block; width: fit-content;">Saved result to <span x-text="$store.download_name" class="monospace"></span></div>
+        <div style="margin: auto; display: block; width: fit-content;" x-show="$store.target=='writer'">Saved result to <span x-text="$store.download_name" class="monospace"></span></div>
         <button  type="button" class="btn btn-outline-primary"  onclick="location.reload();">Upscale another
             <img src="refresh.svg" width="20" height="20">
         </button>
 
-        <a  x-bind:href="$store.download_url"  x-bind:download="$store.download_name"  x-show="$store.download_url" style="margin: auto;"><button  type="button" class="btn btn-primary" id="download">Download
+        <a  x-bind:href="$store.download_url"  x-bind:download="$store.download_name"  x-show="$store.target=='blob'" style="margin: auto;"><button  type="button" class="btn btn-primary" id="download">Download
             <img src="download-icon.svg" width="20" height="20">
         </button></a>
 
