@@ -157,6 +157,15 @@ async function initRecording(){
 
     let bitrate = getBitrate();
 
+    const videoProcessor = new Worker(new URL('./videoProcessor.js', import.meta.url));
+    videoProcessor.postMessage({
+        question:
+            'The Answer to the Ultimate Question of Life, The Universe, and Everything.',
+    });
+
+    videoProcessor.onmessage = ({ data: { answer } }) => {
+        console.log(answer);
+    };
 
 
     const max_duration = 3500/(bitrate/(8*1024*1024));
