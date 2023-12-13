@@ -160,8 +160,6 @@ async function initRecording(){
 
     let bitrate = getBitrate();
 
-
-
     const max_duration = 3500/(bitrate/(8*1024*1024));
 
     let writer;
@@ -210,8 +208,6 @@ async function initRecording(){
         error: (e)=> processingError(e.message)
     })
 
-
-
     const audioEncoderConfig = {
         codec: 'mp4a.40.2',
         sampleRate: 48000,
@@ -234,14 +230,15 @@ async function initRecording(){
 
     if(!(await VideoEncoder.isConfigSupported(videoEncoderConfig)).supported) return showUnsupported(`Video codec: ${codec_string}`);
 
-    const videoProcessor = new Worker(new URL('./videoProcessor.js', import.meta.url));
+    const offscreenVideoEncoder= new Worker(new URL('./videoEncoder.js', import.meta.url));
 
-    videoProcessor.postMessage({
+    offscreenVideoEncoder.postMessage({
         cmd: 'init',
         config: videoEncoderConfig
     });
 
-    videoProcessor.onmessage = function ({ data }){
+
+    offscreenVideoEncoder.onmessage = function ({ data }){
 
         if(data.cmd === 'encoded'){
 
@@ -251,11 +248,39 @@ async function initRecording(){
                 duration: data.duration,
                 data: data.buffer
             });
+            pending_outputs --;
+
+            let progress  = Math.floor((data.timestamp/(1000*1000))/video.duration*100);
+
+            Alpine.store('progress', progress);
 
             addVideoChunk(chunk, data.meta);
+
+            if(video.ended && frameStack.length >0) encodeLoop();
+
+
+
+        } else if(data.cmd === 'error'){
+            processingError(data.msg);
         }
 
     }
+
+    let lastPendingOutputs =0;
+    let samePendingCount = 0;
+
+    let checkOutputs  = setInterval(function () {
+
+        if(lastPendingOutputs === pending_outputs) samePendingCount +=1;
+        else samePendingCount =0;
+
+        lastPendingOutputs = JSON.parse(JSON.stringify(pending_outputs));
+
+        if(samePendingCount > 5){
+            offscreenVideoEncoder.postMessage({cmd: 'flush'});
+            samePendingCount = 0;
+        }
+    }, 200);
 
 
     const frameStack = [];
@@ -269,33 +294,36 @@ async function initRecording(){
         pending_outputs +=1;
         if(frameStack.length > 40) video.pause();
 
-        if(!finished) video.requestVideoFrameCallback(decodeLoop);
+        if(!video.ended && !finished) video.requestVideoFrameCallback(decodeLoop);
 
     }
 
 
+    window.frameStack = frameStack;
+
     async function encodeLoop() {
-        if(frameStack.length ===0 && !video.ended) return video.requestVideoFrameCallback(encodeLoop);
+
+        if(frameStack.length ===0 && !finished) return video.requestVideoFrameCallback(encodeLoop);
+
         const { frame, time } = frameStack.shift();
 
         await websr.render(frame);
 
         const upscaled_bitmap = await createImageBitmap(canvas);
 
-        let progress  = Math.floor(time/video.duration*100);
 
-        Alpine.store('progress', progress);
 
         const isKeyFrame = frames_processed %60 ===0;
 
         frames_processed +=1;
-        pending_outputs --;
 
 
+        offscreenVideoEncoder.postMessage({cmd: 'encode', bitmap: upscaled_bitmap, isKeyFrame, timestamp:time*1000*1000}, [upscaled_bitmap]);
 
-        videoProcessor.postMessage({cmd: 'encode', bitmap: upscaled_bitmap, isKeyFrame, timestamp:time*1000*1000}, [upscaled_bitmap]);
 
-        if(!(video.ended && frameStack.length ===0) && !finished) await encodeLoop();
+        if((!video.ended || !(frameStack.length ===0 )) && !finished) {
+            await encodeLoop();
+        }
     }
 
 
@@ -363,10 +391,11 @@ async function initRecording(){
 
         audioEncoder.encode(audioData);
     }
-
+    Alpine.store('progress', 0);
     video.play();
-    video.requestVideoFrameCallback(decodeLoop);
     video.requestVideoFrameCallback(encodeLoop);
+    video.requestVideoFrameCallback(decodeLoop);
+
 
 
     video.onended = async function () {
@@ -378,7 +407,8 @@ async function initRecording(){
         Alpine.store('progress', 100);
 
         finished = true;
-        videoProcessor.postMessage({cmd: 'flush'});
+        clearInterval(checkOutputs);
+        offscreenVideoEncoder.postMessage({cmd: 'flush'});
         await audioEncoder.flush();
         muxer.finalize();
 
@@ -395,6 +425,8 @@ async function initRecording(){
 
 
     }
+
+    window.onEnd = onEnd;
 
     async function addVideoChunk(chunk, meta){
 
