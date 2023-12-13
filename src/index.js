@@ -197,13 +197,19 @@ async function initRecording(){
     })
 
 
-    audioEncoder.configure({
+
+    const audioEncoderConfig = {
         codec: 'mp4a.40.2',
         sampleRate: 48000,
         numberOfChannels: 2
-    });
+    }
 
-     const videoEncoder = new VideoEncoder({
+    if(!AudioEncoder.isConfigSupported(audioEncoderConfig)) return showUnsupported(`Audio codec: ${audioEncoderConfig.codec}`);
+
+    audioEncoder.configure(audioEncoderConfig);
+
+
+    const videoEncoder = new VideoEncoder({
         output: (chunk, meta) => {
             addVideoChunk(chunk, meta);
         },
@@ -213,17 +219,19 @@ async function initRecording(){
     });
 
 
+   let codec_string = video.videoWidth*video.videoHeight *4 > 1920*1080  ? 'avc1.42003e': 'avc1.42001f';
 
-     // Adaptive scaling
-
-
-    videoEncoder.configure({
+    const videoEncoderConfig = {
         codec: 'avc1.42003e',
         width: video.videoWidth*2,
         height: video.videoHeight*2,
         bitrate: bitrate,
         framerate: 30,
-    });
+    };
+
+    if(!VideoEncoder.isConfigSupported(videoEncoderConfig)) return showUnsupported(`Video codec: ${codec_string}`);
+
+    videoEncoder.configure(videoEncoderConfig);
 
 
     const frameStack = [];
