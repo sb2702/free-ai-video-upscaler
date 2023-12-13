@@ -8,6 +8,7 @@ import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css";
 import "./lib/image-compare-viewer.min.css"
+import isArray from "alpinejs";
 
 
 let video;
@@ -78,10 +79,15 @@ async function setupPreview(url) {
 
     video.src = url;
 
+    const imageCompare = document.getElementById('image-compare');
+
+    Alpine.store('state', 'preview');
+
     video.onloadeddata = async function (){
 
         canvas.width = video.videoWidth*2;
         canvas.height = video.videoHeight*2;
+        new ImageCompare(imageCompare).mount();
         video.requestVideoFrameCallback(showPreview);
     }
 
@@ -89,16 +95,6 @@ async function setupPreview(url) {
     async function showPreview(){
 
         const fullScreenButton = document.getElementById('full-screen');
-        const imageCompare = document.getElementById('image-compare');
-
-
-
-
-
-        Alpine.store('state', 'preview');
-
-        // View them side by side
-        new ImageCompare(imageCompare).mount();
 
         websr = new WebSR({
             source: video,
@@ -112,6 +108,9 @@ async function setupPreview(url) {
         await websr.render(bitmap);
         window.initRecording = initRecording;
         window.fullScreenPreview = fullScreenPreview;
+
+        video.style.height = '100%';
+
         fullScreenButton.style.left = `${imageCompare.offsetLeft + 550}px`
         fullScreenButton.style.top = `${imageCompare.offsetTop + 300}px`
 
@@ -132,10 +131,16 @@ async function setupPreview(url) {
         }
 
 
-        async function fullScreenPreview(e) {
-            imageCompare.requestFullscreen();
+        function canvasFullScreen(){
             canvas.style.width = `${window.innerWidth}px`;
             canvas.style.height = `${window.innerHeight}px`;
+        }
+
+        async function fullScreenPreview(e) {
+            imageCompare.requestFullscreen();
+            setTimeout(canvasFullScreen, 20);
+            setTimeout(canvasFullScreen, 60);
+            setTimeout(canvasFullScreen, 200);
 
         }
 
