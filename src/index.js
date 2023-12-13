@@ -8,7 +8,7 @@ import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css";
 import "./lib/image-compare-viewer.min.css"
-import isArray from "alpinejs";
+
 
 
 let video;
@@ -35,6 +35,8 @@ async function index() {
 
     video  =  document.getElementById("video");
     canvas = document.getElementById("upscaled");
+
+    if(!video.requestVideoFrameCallback) return showUnsupported("video.requestVideoFrameCallback");
 
     if(!"VideoEncoder" in window) return showUnsupported("WebCodecs");
     gpu = await WebSR.initWebGPU();
