@@ -98,6 +98,21 @@ async function setupPreview(url) {
 
         const fullScreenButton = document.getElementById('full-screen');
 
+        const offscreen = canvas.transferControlToOffscreen();
+
+
+        const bitmap = await createImageBitmap(video);
+        const videoProcessor = new Worker(new URL('./videoProcessor.js', import.meta.url));
+
+        videoProcessor.postMessage({
+            cmd: 'init',
+            canvas: offscreen,
+            bitmap
+        }, [offscreen, bitmap]);
+
+
+        return;
+
         websr = new WebSR({
             source: video,
             network_name: "anime4k/cnn-2x-s",
@@ -106,7 +121,7 @@ async function setupPreview(url) {
             canvas: canvas
         });
 
-        const bitmap = await createImageBitmap(video);
+
         await websr.render(bitmap);
         window.initRecording = initRecording;
         window.fullScreenPreview = fullScreenPreview;
@@ -157,11 +172,7 @@ async function initRecording(){
 
     let bitrate = getBitrate();
 
-    const videoProcessor = new Worker(new URL('./videoProcessor.js', import.meta.url));
-    videoProcessor.postMessage({
-        question:
-            'The Answer to the Ultimate Question of Life, The Universe, and Everything.',
-    });
+
 
     videoProcessor.onmessage = ({ data: { answer } }) => {
         console.log(answer);
@@ -190,9 +201,6 @@ async function initRecording(){
         Alpine.store('state', 'error')
         Alpine.store('error', text);
     }
-
-
-
 
     const target = writer ? new FileSystemWritableFileStreamTarget(writer) : new ArrayBufferTarget();
 
