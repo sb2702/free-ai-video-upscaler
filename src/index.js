@@ -256,8 +256,8 @@ async function initRecording(){
 
             addVideoChunk(chunk, data.meta);
 
-            if(video.ended && frameStack.length >0) encodeLoop();
-
+            if(!video.ended && pending_outputs <10) video.play();
+            else if(video.ended && frameStack.length >0) encodeLoop();
 
 
         } else if(data.cmd === 'error'){
@@ -292,7 +292,9 @@ async function initRecording(){
             time: video.currentTime
         });
         pending_outputs +=1;
-        if(frameStack.length > 40) video.pause();
+        if(pending_outputs> 40) {
+            video.pause();
+        }
 
         if(!video.ended && !finished) video.requestVideoFrameCallback(decodeLoop);
 
