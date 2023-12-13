@@ -155,6 +155,8 @@ async function initRecording(){
 
     let bitrate = getBitrate();
 
+
+
     const max_duration = 3500/(bitrate/(8*1024*1024));
 
     let writer;
@@ -170,6 +172,16 @@ async function initRecording(){
     let finished = false;
 
     video.volume = 0.01;
+
+
+    function processingError(text){
+        finished = true;
+        Alpine.store('state', 'error')
+        Alpine.store('error', text);
+    }
+
+
+
 
     const target = writer ? new FileSystemWritableFileStreamTarget(writer) : new ArrayBufferTarget();
 
@@ -193,7 +205,7 @@ async function initRecording(){
         output: function (encodedAudioChunk) {
             muxer.addAudioChunk(encodedAudioChunk);
         },
-        error: (e)=> console.log(e)
+        error: (e)=> processingError(e.message)
     })
 
 
@@ -204,7 +216,7 @@ async function initRecording(){
         numberOfChannels: 2
     }
 
-    if(!AudioEncoder.isConfigSupported(audioEncoderConfig)) return showUnsupported(`Audio codec: ${audioEncoderConfig.codec}`);
+    if(!(await AudioEncoder.isConfigSupported(audioEncoderConfig)).supported) return showUnsupported(`Audio codec: ${audioEncoderConfig.codec}`);
 
     audioEncoder.configure(audioEncoderConfig);
 
@@ -214,7 +226,7 @@ async function initRecording(){
             addVideoChunk(chunk, meta);
         },
         error: (e) => {
-            console.log(e.message);
+            processingError(e.message)
         }
     });
 
@@ -222,14 +234,14 @@ async function initRecording(){
    let codec_string = video.videoWidth*video.videoHeight *4 > 1920*1080  ? 'avc1.42003e': 'avc1.42001f';
 
     const videoEncoderConfig = {
-        codec: 'avc1.42003e',
+        codec: codec_string,
         width: video.videoWidth*2,
         height: video.videoHeight*2,
         bitrate: bitrate,
         framerate: 30,
     };
 
-    if(!VideoEncoder.isConfigSupported(videoEncoderConfig)) return showUnsupported(`Video codec: ${codec_string}`);
+    if(!(await VideoEncoder.isConfigSupported(videoEncoderConfig)).supported) return showUnsupported(`Video codec: ${codec_string}`);
 
     videoEncoder.configure(videoEncoderConfig);
 
@@ -245,9 +257,7 @@ async function initRecording(){
         pending_outputs +=1;
         if(frameStack.length > 40) video.pause();
 
-        video.requestVideoFrameCallback(decodeLoop);
-
-
+        if(!finished) video.requestVideoFrameCallback(decodeLoop);
 
     }
 
@@ -278,7 +288,7 @@ async function initRecording(){
 
 
 
-        if(!(video.ended && frameStack.length ===0) ) await encodeLoop();
+        if(!(video.ended && frameStack.length ===0) && !finished) await encodeLoop();
     }
 
 

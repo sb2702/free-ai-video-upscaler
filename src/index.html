@@ -31,6 +31,10 @@
     <p class="panel-text">Your browser does not support <span id="missing-component" x-text="$store.component"></span>, a required browser feature for this tool.</p>
 </div>
 
+<div id="error-panel" class="panel"   x-show="$store.state === 'error'">
+    <p class="panel-text">An error ocurred while processing the video: <span class="monospace" x-text="$store.error"></span></p>
+</div>
+
 <div id="file-load-panel" class="panel"  x-show="$store.state === 'init'">
     <p class="panel-text">Choose a video to upscale</p>
     <button type="button" class="btn btn-primary"  id="input-button" onclick="chooseFile(this)">Choose a video file</button>
