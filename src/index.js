@@ -8,11 +8,13 @@ import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css";
 import "./lib/image-compare-viewer.min.css"
-import {max} from "@popperjs/core/lib/utils/math";
 
 
-const video  =  document.getElementById("video");
-const canvas = document.getElementById("upscaled");
+let video;
+let canvas;
+
+
+
 let download_name;
 
 let gpu;
@@ -22,11 +24,17 @@ Alpine.store('state', 'init');
 
 Alpine.start();
 
-index();
+
+document.addEventListener("DOMContentLoaded", index);
+
 
 //===================  Initial Load ===========================
 
 async function index() {
+
+    video  =  document.getElementById("video");
+    canvas = document.getElementById("upscaled");
+
     if(!"VideoEncoder" in window) return showUnsupported("WebCodecs");
     gpu = await WebSR.initWebGPU();
     if(!gpu) return showUnsupported("WebGPU");
