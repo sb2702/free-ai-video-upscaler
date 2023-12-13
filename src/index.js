@@ -98,20 +98,6 @@ async function setupPreview(url) {
 
         const fullScreenButton = document.getElementById('full-screen');
 
-        const offscreen = canvas.transferControlToOffscreen();
-
-
-        const bitmap = await createImageBitmap(video);
-        const videoProcessor = new Worker(new URL('./videoProcessor.js', import.meta.url));
-
-        videoProcessor.postMessage({
-            cmd: 'init',
-            canvas: offscreen,
-            bitmap
-        }, [offscreen, bitmap]);
-
-
-        return;
 
         websr = new WebSR({
             source: video,
@@ -120,6 +106,8 @@ async function setupPreview(url) {
             gpu: gpu,
             canvas: canvas
         });
+
+        const bitmap = await createImageBitmap(video);
 
 
         await websr.render(bitmap);
@@ -172,11 +160,6 @@ async function initRecording(){
 
     let bitrate = getBitrate();
 
-
-
-    videoProcessor.onmessage = ({ data: { answer } }) => {
-        console.log(answer);
-    };
 
 
     const max_duration = 3500/(bitrate/(8*1024*1024));
@@ -239,17 +222,6 @@ async function initRecording(){
 
     audioEncoder.configure(audioEncoderConfig);
 
-
-    const videoEncoder = new VideoEncoder({
-        output: (chunk, meta) => {
-            addVideoChunk(chunk, meta);
-        },
-        error: (e) => {
-            processingError(e.message)
-        }
-    });
-
-
    let codec_string = video.videoWidth*video.videoHeight *4 > 1920*1080  ? 'avc1.42003e': 'avc1.42001f';
 
     const videoEncoderConfig = {
@@ -262,7 +234,28 @@ async function initRecording(){
 
     if(!(await VideoEncoder.isConfigSupported(videoEncoderConfig)).supported) return showUnsupported(`Video codec: ${codec_string}`);
 
-    videoEncoder.configure(videoEncoderConfig);
+    const videoProcessor = new Worker(new URL('./videoProcessor.js', import.meta.url));
+
+    videoProcessor.postMessage({
+        cmd: 'init',
+        config: videoEncoderConfig
+    });
+
+    videoProcessor.onmessage = function ({ data }){
+
+        if(data.cmd === 'encoded'){
+
+            const chunk = new EncodedVideoChunk({
+                type: data.type,
+                timestamp: data.timestamp,
+                duration: data.duration,
+                data: data.buffer
+            });
+
+            addVideoChunk(chunk, data.meta);
+        }
+
+    }
 
 
     const frameStack = [];
@@ -289,23 +282,18 @@ async function initRecording(){
 
         const upscaled_bitmap = await createImageBitmap(canvas);
 
-
-        const upscaled_frame = new VideoFrame(upscaled_bitmap, { timestamp: time*1000*1000});
-
-        const isKeyFrame = frames_processed %60 ===0;
-
         let progress  = Math.floor(time/video.duration*100);
 
         Alpine.store('progress', progress);
 
+        const isKeyFrame = frames_processed %60 ===0;
+
         frames_processed +=1;
         pending_outputs --;
 
-        videoEncoder.encode(upscaled_frame, { keyFrame: isKeyFrame});
-
-        upscaled_frame.close();
 
 
+        videoProcessor.postMessage({cmd: 'encode', bitmap: upscaled_bitmap, isKeyFrame, timestamp:time*1000*1000}, [upscaled_bitmap]);
 
         if(!(video.ended && frameStack.length ===0) && !finished) await encodeLoop();
     }
@@ -390,7 +378,7 @@ async function initRecording(){
         Alpine.store('progress', 100);
 
         finished = true;
-        await videoEncoder.flush()
+        videoProcessor.postMessage({cmd: 'flush'});
         await audioEncoder.flush();
         muxer.finalize();
 
