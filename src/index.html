@@ -42,7 +42,7 @@
 
 <div id="start-panel" class="panel" x-show="$store.state === 'preview' || $store.state === 'processing' || $store.state === 'complete'">
     <div id="image-compare">
-        <video id="video" width="640" height="360"></video>
+        <canvas id="original"></canvas>
         <canvas id="upscaled" ></canvas>
 
     </div>

@@ -32,6 +32,7 @@
     "html-webpack-plugin": "^5.5.4",
     "jquery": "^3.7.1",
     "mp4-muxer": "^3.0.2",
+    "mp4box": "^0.5.2",
     "popper.js": "^1.16.1",
     "style-loader": "^3.3.3",
     "webpack": "^5.89.0",

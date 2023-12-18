@@ -3,6 +3,7 @@ import { Muxer, ArrayBufferTarget, FileSystemWritableFileStreamTarget } from 'mp
 import weights from './cnn-2x-s.json'
 import Alpine from 'alpinejs'
 import ImageCompare from './lib/image-compare-viewer.min';
+import { MP4Demuxer } from "./demuxer_mp4";
 
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -11,9 +12,10 @@ import "./lib/image-compare-viewer.min.css"
 
 
 
+let upscaled_canvas;
+let original_canvas;
 let video;
-let canvas;
-
+let ctx;
 
 
 let download_name;
@@ -33,10 +35,9 @@ document.addEventListener("DOMContentLoaded", index);
 
 async function index() {
 
-    video  =  document.getElementById("video");
-    canvas = document.getElementById("upscaled");
-
-    if(!video.requestVideoFrameCallback) return showUnsupported("video.requestVideoFrameCallback");
+    upscaled_canvas = document.getElementById("upscaled");
+    original_canvas = document.getElementById('original');
+    ctx = original_canvas.getContext('bitmaprenderer');
 
     if(!"VideoEncoder" in window) return showUnsupported("WebCodecs");
     gpu = await WebSR.initWebGPU();
@@ -54,6 +55,7 @@ function chooseFile(e) {
     const input = document.createElement('input');
     input.type = 'file';
     input.onchange = loadVideo;
+    input.accept = "video/mp4";
     input.click();
 }
 
@@ -63,23 +65,31 @@ function chooseFile(e) {
 function loadVideo(input){
 
     const file = input.target.files[0];
-    const url = URL.createObjectURL(file);
 
     const reader = new FileReader();
 
     reader.onload = function (e) {
-        setupPreview(url);
+        const data = reader.result;
+
+        setupPreview(data);
     }
+
+    reader.readAsArrayBuffer(file);
 
     download_name = file.name.split(".")[0] + "-upscaled.mp4";
     Alpine.store('download_name',  download_name);
-    reader.readAsDataURL(file);
 
 }
 
-async function setupPreview(url) {
+async function setupPreview(data) {
 
-    video.src = url;
+    video = document.createElement('video');
+
+
+    const fileBlob = new Blob([data], {type: "video/mp4"});
+
+    video.src = URL.createObjectURL(fileBlob);
+
 
     const imageCompare = document.getElementById('image-compare');
 
@@ -87,8 +97,10 @@ async function setupPreview(url) {
 
     video.onloadeddata = async function (){
 
-        canvas.width = video.videoWidth*2;
-        canvas.height = video.videoHeight*2;
+        upscaled_canvas.width = video.videoWidth*2;
+        upscaled_canvas.height = video.videoHeight*2;
+        original_canvas.width = video.videoWidth;
+        original_canvas.height = video.videoHeight;
         new ImageCompare(imageCompare).mount();
         video.requestVideoFrameCallback(showPreview);
     }
@@ -98,21 +110,24 @@ async function setupPreview(url) {
 
         const fullScreenButton = document.getElementById('full-screen');
 
-
         websr = new WebSR({
             source: video,
             network_name: "anime4k/cnn-2x-s",
             weights:weights,
             gpu: gpu,
-            canvas: canvas
+            canvas: upscaled_canvas
         });
 
         const bitmap = await createImageBitmap(video);
 
 
+
         await websr.render(bitmap);
         window.initRecording = initRecording;
         window.fullScreenPreview = fullScreenPreview;
+
+        ctx.transferFromImageBitmap(await createImageBitmap(video));
+
 
         video.style.height = '100%';
 
@@ -121,8 +136,10 @@ async function setupPreview(url) {
 
         imageCompare.addEventListener('fullscreenchange', function () {
             if(!document.fullscreenElement){
-                canvas.style.width = ``;
-                canvas.style.height = ``;
+                upscaled_canvas.style.width = ``;
+                upscaled_canvas.style.height = ``;
+                original_canvas.style.width = ``;
+                original_canvas.style.height = ``;
             }
         });
 
@@ -137,8 +154,10 @@ async function setupPreview(url) {
 
 
         function canvasFullScreen(){
-            canvas.style.width = `${window.innerWidth}px`;
-            canvas.style.height = `${window.innerHeight}px`;
+            upscaled_canvas.style.width = `${window.innerWidth}px`;
+            upscaled_canvas.style.height = `${window.innerHeight}px`;
+            original_canvas.style.width = `${window.innerWidth}px`;
+            original_canvas.style.height = `${window.innerHeight}px`;
         }
 
         async function fullScreenPreview(e) {
@@ -458,6 +477,30 @@ async function showFilePicker(){
 
 
     return  await handle.createWritable();
+}
+
+
+function getMP4Data(data, type) {
+
+    return new Promise(function (resolve, reject) {
+
+        let configToReturn;
+        let dataToReturn;
+
+        const demuxer = new MP4Demuxer(data, type, {
+            onConfig(config) {
+                configToReturn = config;
+                if(configToReturn && dataToReturn) return resolve({config: configToReturn, encoded_chunks: dataToReturn});
+            },
+            onData(chunks) {
+                dataToReturn = chunks;
+                if(configToReturn && dataToReturn) return resolve({config: configToReturn, encoded_chunks: dataToReturn});
+            },
+            setStatus: function (){}
+        });
+    });
+
+
 }
 
 
