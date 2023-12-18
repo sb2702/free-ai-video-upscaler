@@ -324,7 +324,7 @@ async function initRecording(){
         } else {
             Alpine.store('eta', 'calculating...')
         }
-    ;
+
 
 
         Alpine.store('progress', progress);
