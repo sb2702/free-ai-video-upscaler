@@ -78,6 +78,7 @@ function loadVideo(input){
 
     download_name = file.name.split(".")[0] + "-upscaled.mp4";
     Alpine.store('download_name',  download_name);
+    Alpine.store('filename',  file.name);
 
 }
 
@@ -95,8 +96,10 @@ async function setupPreview(data) {
 
     Alpine.store('state', 'preview');
 
-    video.onloadeddata = async function (){
 
+    video.onloadeddata = async function (){
+        Alpine.store('width', video.videoWidth);
+        Alpine.store('height', video.videoHeight);
         upscaled_canvas.width = video.videoWidth*2;
         upscaled_canvas.height = video.videoHeight*2;
         original_canvas.width = video.videoWidth;
@@ -276,6 +279,8 @@ async function initRecording(){
 
     const encode_promises = [];
 
+    const start_time = performance.now();
+
     let last_decode = performance.now();
 
     let flush_check = setInterval(function () {
@@ -307,6 +312,14 @@ async function initRecording(){
         const new_frame = new VideoFrame(bitmap,{ timestamp: frame.timestamp});
 
         let progress  = Math.floor((frame.timestamp/(1000*1000))/video.duration*100);
+
+        let time_elapsed = performance.now() - start_time;
+        const processing_rate = progress/time_elapsed;
+
+        let eta = Math.round(((100-progress)/processing_rate)/1000);
+        Alpine.store('eta', prettyTime(eta));
+
+
 
         Alpine.store('progress', progress);
 
@@ -383,6 +396,18 @@ async function initRecording(){
 function getBitrate() {
 
     return 1e7 * (video.videoWidth*video.videoHeight*4)/(1280*720);
+}
+
+function prettyTime(secs){
+    var sec_num = parseInt(secs, 10)
+    var hours   = Math.floor(sec_num / 3600)
+    var minutes = Math.floor(sec_num / 60) % 60
+    var seconds = sec_num % 60
+
+    return [hours,minutes,seconds]
+        .map(v => v < 10 ? "0" + v : v)
+        .filter((v,i) => v !== "00" || i > 0)
+        .join(":")
 }
 
 async function showFilePicker(){

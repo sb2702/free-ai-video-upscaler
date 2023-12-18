@@ -53,7 +53,7 @@
     <br>
 
     <div id="preview"  x-show="$store.state === 'preview'">
-        <p style="width: 100%;">⬆ &nbsp Preview &nbsp ⬆</p>
+        <p style="width: 100%;">Upscaling <span x-text="$store.filename" class="monospace"></span> from<span class="monospace"><span x-text="$store.width" ></span>x<span x-text="$store.height" ></span></span>  to  <span class="monospace"><span x-text="$store.width*2" ></span>x<span x-text="$store.height*2"></span></span></p>
 
         <button  type="button" class="btn btn-primary start"  onclick="initRecording()" x-show="$store.target === 'writer'">Choose output location &nbsp
             <img src="folder.svg" width="10" height="10">
@@ -65,7 +65,7 @@
     </div>
 
     <div id="info"  x-show="$store.state === 'processing'">
-        <p id="loading">Upscaling...</p>
+        <p id="loading">Upscaling <span x-text="$store.filename" class="monospace"></span> .Estimated time left: <span x-text="$store.eta"></span></p>
         <div class="progress" id="progress">
             <div  class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"  x-bind:style="{width: $store.progress + '%'}" x-bind:aria-valuenow="$store.progress" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
         </div>
