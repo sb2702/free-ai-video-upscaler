@@ -192,7 +192,6 @@ async function initRecording(){
 
     const audioData  = await getMP4Data(data, 'audio');
 
-    const audio_config = audioData.config;
     const source_audio_chunks = audioData.encoded_chunks;
 
     let { config, encoded_chunks } = await getMP4Data(data, 'video');
@@ -293,13 +292,15 @@ async function initRecording(){
         const frame = await decode_promise;
         last_decode = performance.now();
 
-        //    renderer.draw(frame);
 
         const bitmap1 = await createImageBitmap(frame);
         const bitmap2 = await createImageBitmap(frame);
 
-        await websr.render(bitmap1);
+
+        let render_promise = websr.render(bitmap1);
         ctx.transferFromImageBitmap(bitmap2);
+        await render_promise;
+
 
         const bitmap = await createImageBitmap(upscaled_canvas);
 
@@ -344,18 +345,14 @@ async function initRecording(){
 
         const {chunk, meta} = await encode_promise;
 
-
-
-
         muxer.addVideoChunk(chunk, meta);
 
         last_encode = performance.now();
 
-
     }
 
     clearInterval(flush_check);
-    
+
     for (let audio_chunk of source_audio_chunks){
         muxer.addAudioChunk(audio_chunk);
     }
