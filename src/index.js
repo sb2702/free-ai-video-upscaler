@@ -19,7 +19,7 @@ let ctx;
 
 
 let download_name;
-
+let data;
 let gpu;
 let websr;
 
@@ -69,7 +69,7 @@ function loadVideo(input){
     const reader = new FileReader();
 
     reader.onload = function (e) {
-        const data = reader.result;
+        data = reader.result;
 
         setupPreview(data);
     }
@@ -188,19 +188,18 @@ async function initRecording(){
     }
 
     Alpine.store('state', 'processing');
+    Alpine.store('progress', 0);
 
-    let pending_outputs = 0;
-    let frames_processed = 0;
+    const audioData  = await getMP4Data(data, 'audio');
+
+    const audio_config = audioData.config;
+    const source_audio_chunks = audioData.encoded_chunks;
+
+    let { config, encoded_chunks } = await getMP4Data(data, 'video');
+
+
     let finished = false;
 
-    video.volume = 0.01;
-
-
-    function processingError(text){
-        finished = true;
-        Alpine.store('state', 'error')
-        Alpine.store('error', text);
-    }
 
     const target = writer ? new FileSystemWritableFileStreamTarget(writer) : new ArrayBufferTarget();
 
@@ -216,26 +215,10 @@ async function initRecording(){
             numberOfChannels: 2,
             sampleRate: 48000
         },
+        firstTimestampBehavior: 'offset',
         fastStart: 'in-memory'
     });
 
-
-    const audioEncoder = new AudioEncoder({
-        output: function (encodedAudioChunk) {
-            muxer.addAudioChunk(encodedAudioChunk);
-        },
-        error: (e)=> processingError(e.message)
-    })
-
-    const audioEncoderConfig = {
-        codec: 'mp4a.40.2',
-        sampleRate: 48000,
-        numberOfChannels: 2
-    }
-
-    if(!(await AudioEncoder.isConfigSupported(audioEncoderConfig)).supported) return showUnsupported(`Audio codec: ${audioEncoderConfig.codec}`);
-
-    audioEncoder.configure(audioEncoderConfig);
 
    let codec_string = video.videoWidth*video.videoHeight *4 > 1920*1080  ? 'avc1.42003e': 'avc1.42001f';
 
@@ -249,213 +232,153 @@ async function initRecording(){
 
     if(!(await VideoEncoder.isConfigSupported(videoEncoderConfig)).supported) return showUnsupported(`Video codec: ${codec_string}`);
 
-    const offscreenVideoEncoder= new Worker(new URL('./videoEncoder.js', import.meta.url));
+    const decode_callbacks = [];
 
-    offscreenVideoEncoder.postMessage({
-        cmd: 'init',
-        config: videoEncoderConfig
+    // Set up a VideoDecoer.
+    const decoder = new VideoDecoder({
+        output(frame) {
+
+            const callback = decode_callbacks.shift();
+            callback(frame);
+        },
+        error(e) {
+            console.log(e);
+        }
     });
 
 
-    offscreenVideoEncoder.onmessage = function ({ data }){
+    const encode_callbacks = [];
 
-        if(data.cmd === 'encoded'){
-
-            const chunk = new EncodedVideoChunk({
-                type: data.type,
-                timestamp: data.timestamp,
-                duration: data.duration,
-                data: data.buffer
-            });
-            pending_outputs --;
-
-            let progress  = Math.floor((data.timestamp/(1000*1000))/video.duration*100);
-
-            Alpine.store('progress', progress);
-
-            addVideoChunk(chunk, data.meta);
-
-            if(!video.ended && pending_outputs <10) video.play();
-            else if(video.ended && frameStack.length >0) encodeLoop();
-
-
-        } else if(data.cmd === 'error'){
-            processingError(data.msg);
+    const encoder = new VideoEncoder({
+        output: (chunk, meta) => {
+            const callback = encode_callbacks.shift();
+            callback({chunk, meta});
+        },
+        error: (e) => {
+            console.log(e);
         }
-
-    }
-
-    let lastPendingOutputs =0;
-    let samePendingCount = 0;
-
-    let checkOutputs  = setInterval(function () {
-
-        if(lastPendingOutputs === pending_outputs) samePendingCount +=1;
-        else samePendingCount =0;
-
-        lastPendingOutputs = JSON.parse(JSON.stringify(pending_outputs));
-
-        if(samePendingCount > 5){
-            offscreenVideoEncoder.postMessage({cmd: 'flush'});
-            samePendingCount = 0;
-        }
-    }, 200);
-
-
-    const frameStack = [];
-
-    async function decodeLoop() {
-        let bitmap = await createImageBitmap(video);
-        frameStack.push({
-            frame: bitmap,
-            time: video.currentTime
-        });
-        pending_outputs +=1;
-        if(pending_outputs> 40) {
-            video.pause();
-        }
-
-        if(!video.ended && !finished) video.requestVideoFrameCallback(decodeLoop);
-
-    }
-
-
-    window.frameStack = frameStack;
-
-    async function encodeLoop() {
-
-        if(frameStack.length ===0 && !finished) return video.requestVideoFrameCallback(encodeLoop);
-
-        const { frame, time } = frameStack.shift();
-
-        await websr.render(frame);
-
-        const upscaled_bitmap = await createImageBitmap(canvas);
-
-
-
-        const isKeyFrame = frames_processed %60 ===0;
-
-        frames_processed +=1;
-
-
-        offscreenVideoEncoder.postMessage({cmd: 'encode', bitmap: upscaled_bitmap, isKeyFrame, timestamp:time*1000*1000}, [upscaled_bitmap]);
-
-
-        if((!video.ended || !(frameStack.length ===0 )) && !finished) {
-            await encodeLoop();
-        }
-    }
-
-
-    let initPlaybackTime = null;
-
-
-    let bitmap = await createImageBitmap(video);
-    frameStack.push({
-        frame: bitmap,
-        time: video.currentTime
     });
 
-    pending_outputs +=1;
+
+    encoder.configure(videoEncoderConfig);
+
+    decoder.configure(config);
 
 
-    function copyAudioData(inputBuffer) {
-        // This function should copy data from inputBuffer into a new ArrayBuffer
-        // The implementation depends on how you want to handle the audio data
-        const numberOfChannels = inputBuffer.numberOfChannels;
-        const numberOfFrames = inputBuffer.length;
-        const outputArray = new Float32Array(numberOfChannels * numberOfFrames);
+    const decode_promises = [];
 
-        for (let channel = 0; channel < numberOfChannels; channel++) {
-            const inputData = inputBuffer.getChannelData(channel);
-            for (let frame = 0; frame < numberOfFrames; frame++) {
-                outputArray[frame * numberOfChannels + channel] = inputData[frame];
-            }
-
-        }
-
-        return outputArray.buffer;
+    for (let chunk of encoded_chunks){
+        decode_promises.push(new Promise(function (resolve, reject) {
+            const callback = function (frame){ resolve(frame);}
+            decode_callbacks.push(callback);
+        }));
+        decoder.decode(chunk);
     }
 
-    const audioStream = video.captureStream().getAudioTracks()[0];
-    const audioContext = new AudioContext();
-    const source  = audioContext.createMediaStreamSource(new MediaStream([audioStream]));
-    const processor = audioContext.createScriptProcessor(4096, 2, 2);
+    const encode_promises = [];
 
-    source.connect(processor);
-    processor.connect(audioContext.destination);
-    processor.onaudioprocess = function (e) {
+    let last_decode = performance.now();
 
-        if(finished) return;
+    let flush_check = setInterval(function () {
 
-        if(video.paused) return;
+        if(performance.now() - last_decode > 1000) decoder.flush()
 
-        const inputBuffer = e.inputBuffer;
+    }, 100);
 
-        if(!initPlaybackTime) initPlaybackTime =video.currentTime;
+    for (let i =0; i < decode_promises.length; i++){
 
-        const numberOfChannels = inputBuffer.numberOfChannels;
-        const numberOfFrames = inputBuffer.length;
-        const sampleRate = inputBuffer.sampleRate;
+        const decode_promise = decode_promises[i];
+        const source_chunk = encoded_chunks[i];
 
+        const frame = await decode_promise;
+        last_decode = performance.now();
 
-        // Create an AudioData object
-        let audioData = new AudioData({
-            format: 'f32', // assuming the audio data is in 32-bit float format
-            sampleRate: sampleRate,
-            numberOfFrames: numberOfFrames,
-            numberOfChannels: numberOfChannels,
-            timestamp: (video.currentTime -initPlaybackTime)* sampleRate, // or other appropriate timestamp
-            data: copyAudioData(inputBuffer) // You'll need to copy data from inputBuffer
-        });
+        //    renderer.draw(frame);
 
-        audioEncoder.encode(audioData);
-    }
-    Alpine.store('progress', 0);
-    video.play();
-    video.requestVideoFrameCallback(encodeLoop);
-    video.requestVideoFrameCallback(decodeLoop);
+        const bitmap1 = await createImageBitmap(frame);
+        const bitmap2 = await createImageBitmap(frame);
+
+        await websr.render(bitmap1);
+        ctx.transferFromImageBitmap(bitmap2);
+
+        const bitmap = await createImageBitmap(upscaled_canvas);
+
+        const new_frame = new VideoFrame(bitmap,{ timestamp: frame.timestamp});
+
+        let progress  = Math.floor((frame.timestamp/(1000*1000))/video.duration*100);
+
+        Alpine.store('progress', progress);
 
 
-
-    video.onended = async function () {
-        if(video.ended && pending_outputs < 1 && !finished) return await onEnd();
-    }
-
-    async function onEnd() {
-
-        Alpine.store('progress', 100);
-
-        finished = true;
-        clearInterval(checkOutputs);
-        offscreenVideoEncoder.postMessage({cmd: 'flush'});
-        await audioEncoder.flush();
-        muxer.finalize();
+        encode_promises.push(new Promise(function (resolve, reject) {
+            const callback = function (result){ resolve(result);}
+            encode_callbacks.push(callback);
+        }));
 
 
-        if(writer){
-            await writer.close();
-        } else{
-            const blob = new Blob([muxer.target.buffer], {type: "video/mp4"});
-            Alpine.store('download_url', window.URL.createObjectURL(blob));
-        }
+        encoder.encode(new_frame, {keyFrame: source_chunk.type === 'key'});
 
-        Alpine.store('state', 'complete');
+        frame.close();
+        new_frame.close();
 
-
+        bitmap1.close();
+        bitmap2.close();
+        bitmap.close();
 
     }
 
-    window.onEnd = onEnd;
+    clearInterval(flush_check);
 
-    async function addVideoChunk(chunk, meta){
+    let last_encode = performance.now();
+
+    flush_check = setInterval(function () {
+
+        if(performance.now() - last_encode > 1000) encoder.flush()
+
+    }, 100);
+
+
+    for (let i =0; i < encode_promises.length; i++){
+
+        const encode_promise = encode_promises[i];
+
+        const {chunk, meta} = await encode_promise;
+
+
+
 
         muxer.addVideoChunk(chunk, meta);
 
-        if(video.ended && pending_outputs < 1 && !finished) return await onEnd();
+        last_encode = performance.now();
+
 
     }
+
+    clearInterval(flush_check);
+    
+    for (let audio_chunk of source_audio_chunks){
+        muxer.addAudioChunk(audio_chunk);
+    }
+
+
+
+    Alpine.store('progress', 100);
+
+    finished = true;
+
+    muxer.finalize();
+
+
+    if(writer){
+        await writer.close();
+    } else{
+        const blob = new Blob([muxer.target.buffer], {type: "video/mp4"});
+        Alpine.store('download_url', window.URL.createObjectURL(blob));
+    }
+
+    Alpine.store('state', 'complete');
+
+
 
 
 }
