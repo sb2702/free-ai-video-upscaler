@@ -139,8 +139,18 @@ async function setupPreview(data) {
 
         video.style.height = '100%';
 
-        fullScreenButton.style.left = `${imageCompare.offsetLeft + 550}px`
-        fullScreenButton.style.top = `${imageCompare.offsetTop + 300}px`
+
+        function setFullScreenLocation(){
+            fullScreenButton.style.left = `${imageCompare.offsetLeft + 550}px`;
+            fullScreenButton.style.top = `${imageCompare.offsetTop + 300}px`;
+        }
+
+        setTimeout(setFullScreenLocation, 20);
+        setTimeout(setFullScreenLocation, 60);
+        setTimeout(setFullScreenLocation, 200);
+
+
+
 
         imageCompare.addEventListener('fullscreenchange', function () {
             if(!document.fullscreenElement){
@@ -204,9 +214,6 @@ async function initRecording(){
 
     Alpine.store('progress', 0);
 
-    const audioData  = await getMP4Data(data, 'audio');
-
-    const source_audio_chunks = audioData.encoded_chunks;
 
     let { config, encoded_chunks } = await getMP4Data(data, 'video');
 
@@ -382,6 +389,11 @@ async function initRecording(){
 
     clearInterval(flush_check);
 
+    const audioData  = await getMP4Data(data, 'audio');
+
+    const source_audio_chunks = audioData.encoded_chunks;
+
+
     for (let audio_chunk of source_audio_chunks){
         muxer.addAudioChunk(audio_chunk);
     }
@@ -446,16 +458,25 @@ function getMP4Data(data, type) {
     return new Promise(function (resolve, reject) {
 
         let configToReturn;
-        let dataToReturn;
+        let dataToReturn =[];
+        let lastChunk = false;
 
         const demuxer = new MP4Demuxer(data, type, {
             onConfig(config) {
                 configToReturn = config;
-                if(configToReturn && dataToReturn) return resolve({config: configToReturn, encoded_chunks: dataToReturn});
+                if(configToReturn && lastChunk) return resolve({config: configToReturn, encoded_chunks: dataToReturn});
             },
             onData(chunks) {
-                dataToReturn = chunks;
-                if(configToReturn && dataToReturn) return resolve({config: configToReturn, encoded_chunks: dataToReturn});
+
+                for(let chunk of chunks){
+                    dataToReturn.push(chunk);
+                }
+
+                let last_time = chunks[chunks.length-1].timestamp/(1000*1000);
+
+                if(Math.abs(video.duration - last_time) < 1) lastChunk = true;
+
+                if(configToReturn && lastChunk) return resolve({config: configToReturn, encoded_chunks: dataToReturn});
             },
             setStatus: function (){}
         });
