@@ -236,7 +236,7 @@ async function initRecording(){
             sampleRate: 48000
         },
         firstTimestampBehavior: 'offset',
-        fastStart: 'in-memory'
+        fastStart: writer ? false: 'in-memory'
     });
 
 
@@ -272,7 +272,8 @@ async function initRecording(){
     const encoder = new VideoEncoder({
         output: (chunk, meta) => {
             const callback = encode_callbacks.shift();
-            callback({chunk, meta});
+            muxer.addVideoChunk(chunk, meta);
+            callback();
         },
         error: (e) => {
             console.log(e);
@@ -348,7 +349,7 @@ async function initRecording(){
 
 
         encode_promises.push(new Promise(function (resolve, reject) {
-            const callback = function (result){ resolve(result);}
+            const callback = function (){ resolve();}
             encode_callbacks.push(callback);
         }));
 
@@ -378,11 +379,7 @@ async function initRecording(){
     for (let i =0; i < encode_promises.length; i++){
 
         const encode_promise = encode_promises[i];
-
-        const {chunk, meta} = await encode_promise;
-
-        muxer.addVideoChunk(chunk, meta);
-
+        await encode_promise;
         last_encode = performance.now();
 
     }
