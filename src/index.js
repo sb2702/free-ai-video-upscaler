@@ -68,6 +68,8 @@ function loadVideo(input){
 
     const reader = new FileReader();
 
+    Alpine.store('state', 'loading');
+
     reader.onload = function (e) {
         data = reader.result;
 
@@ -94,10 +96,13 @@ async function setupPreview(data) {
 
     const imageCompare = document.getElementById('image-compare');
 
-    Alpine.store('state', 'preview');
+
 
 
     video.onloadeddata = async function (){
+
+
+
         Alpine.store('width', video.videoWidth);
         Alpine.store('height', video.videoHeight);
         upscaled_canvas.width = video.videoWidth*2;
@@ -171,6 +176,10 @@ async function setupPreview(data) {
 
         }
 
+
+        Alpine.store('state', 'preview');
+
+
     }
 
 }
@@ -179,6 +188,8 @@ async function setupPreview(data) {
 //===================  Process ===========================
 
 async function initRecording(){
+
+    Alpine.store('state', 'loading');
 
     let bitrate = getBitrate();
 
@@ -190,7 +201,7 @@ async function initRecording(){
         writer = await showFilePicker();
     }
 
-    Alpine.store('state', 'processing');
+
     Alpine.store('progress', 0);
 
     const audioData  = await getMP4Data(data, 'audio');
@@ -202,7 +213,7 @@ async function initRecording(){
 
     let finished = false;
 
-
+    Alpine.store('state', 'processing');
     const target = writer ? new FileSystemWritableFileStreamTarget(writer) : new ArrayBufferTarget();
 
     const muxer = new Muxer({

@@ -108,6 +108,12 @@ button{
     justify-content: center;
     align-items: center;
 }
+
+#loading-panel{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 #error-panel{
     display: flex;
     justify-content: center;

@@ -31,6 +31,12 @@
     <p class="panel-text">Your browser does not support <span id="missing-component" x-text="$store.component"></span>, a required browser feature for this tool.</p>
 </div>
 
+
+<div id="loading-panel" class="panel"   x-show="$store.state === 'loading'">
+
+    <img src="loading.svg"  style="width: 256px; height: 256px; margin: auto; display: block; position: relative;">
+</div>
+
 <div id="error-panel" class="panel"   x-show="$store.state === 'error'">
     <p class="panel-text">An error ocurred while processing the video: <span class="monospace" x-text="$store.error"></span></p>
 </div>
@@ -65,7 +71,7 @@
     </div>
 
     <div id="info"  x-show="$store.state === 'processing'">
-        <p id="loading">Upscaling <span x-text="$store.filename" class="monospace"></span> .Estimated time left: <span x-text="$store.eta"></span></p>
+        <p>Upscaling <span x-text="$store.filename" class="monospace"></span> .Estimated time left: <span x-text="$store.eta"></span></p>
         <div class="progress" id="progress">
             <div  class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"  x-bind:style="{width: $store.progress + '%'}" x-bind:aria-valuenow="$store.progress" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
         </div>
