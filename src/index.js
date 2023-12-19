@@ -328,8 +328,7 @@ async function initRecording(){
         let time_elapsed = performance.now() - start_time;
 
         if(time_elapsed > 1000){
-            const processing_rate = progress/time_elapsed;
-
+            const processing_rate = ((frame.timestamp/(1000*1000))/video.duration*100)/time_elapsed;
             let eta = Math.round(((100-progress)/processing_rate)/1000);
             Alpine.store('eta', prettyTime(eta))
         } else {
