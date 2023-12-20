@@ -59,7 +59,7 @@
     <br>
 
     <div id="preview"  x-show="$store.state === 'preview'">
-        <p style="width: 100%;">Upscaling <span x-text="$store.filename" class="monospace"></span> from<span class="monospace"><span x-text="$store.width" ></span>x<span x-text="$store.height" ></span></span>  to  <span class="monospace"><span x-text="$store.width*2" ></span>x<span x-text="$store.height*2"></span></span></p>
+        <p style="width: 100%;">Upscaling <span x-text="$store.filename" class="monospace"></span>  to  <span class="monospace"><span x-text="$store.width*2" ></span>x<span x-text="$store.height*2"></span></span>. Output: ~ <span class="monospace" x-text="$store.size"></span></p>
 
         <button  type="button" class="btn btn-primary start"  onclick="initRecording()" x-show="$store.target === 'writer'">Choose output location &nbsp
             <img src="folder.svg" width="10" height="10">
