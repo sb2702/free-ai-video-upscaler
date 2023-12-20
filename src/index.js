@@ -395,6 +395,8 @@ async function initRecording(){
                 decode_callbacks.push(callback);
             }));
             decoder.decode(chunk);
+
+            last_decode = performance.now();
         }
 
     }
