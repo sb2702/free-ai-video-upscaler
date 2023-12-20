@@ -305,14 +305,19 @@ async function initRecording(){
 
     const decode_promises = [];
 
-    for (let chunk of encoded_chunks){
+    const decoder_buffer_length =1000;
+
+    for (let i = 0; i < Math.min(encoded_chunks.length, decoder_buffer_length); i ++){
+
+        let chunk = encoded_chunks[i];
+
         decode_promises.push(new Promise(function (resolve, reject) {
             const callback = function (frame){ resolve(frame);}
             decode_callbacks.push(callback);
         }));
         decoder.decode(chunk);
     }
-
+    
     const encode_promises = [];
 
     const start_time = performance.now();
@@ -379,6 +384,18 @@ async function initRecording(){
         bitmap1.close();
         bitmap2.close();
         bitmap.close();
+
+
+        if( i +decoder_buffer_length < encoded_chunks.length){
+
+            let chunk = encoded_chunks[i+decoder_buffer_length];
+
+            decode_promises.push(new Promise(function (resolve, reject) {
+                const callback = function (frame){ resolve(frame);}
+                decode_callbacks.push(callback);
+            }));
+            decoder.decode(chunk);
+        }
 
     }
 
