@@ -162,15 +162,14 @@ async function setupPreview(data) {
         });
 
         let bitrate = getBitrate();
-        const max_duration = 2000/(bitrate/(8*1024*1024));
 
-        if(video.duration > max_duration){
+        const estimated_size = (bitrate/8)*video.duration + (128/8)*video.duration; // Assume 128 kbps audio
+
+        if(estimated_size > 100*1024*1024){
             Alpine.store('target', 'writer');
         } else {
             Alpine.store('target', 'blob');
         }
-
-        const estimated_size = (bitrate/8)*video.duration + (128/8)*video.duration; // Assume 128 kbps audio
 
         const quota = (await navigator.storage.estimate()).quota;
 
@@ -213,12 +212,12 @@ async function initRecording(){
     Alpine.store('state', 'loading');
 
     let bitrate = getBitrate();
-
-    const max_duration = 2000/(bitrate/(8*1024*1024));
+    const estimated_size = (bitrate/8)*video.duration + (128/8)*video.duration; // Assume 128 kbps audio
 
     let writer;
 
-    if(video.duration > max_duration){
+    // Max Blob size - 100 MB
+    if(estimated_size > 100*1024*1024){
         writer = await showFilePicker();
     }
 
@@ -289,6 +288,7 @@ async function initRecording(){
             } catch (e) {
                 showError(e.message);
             }
+
 
             callback();
         },
@@ -419,6 +419,7 @@ async function initRecording(){
 
 
         muxer.finalize();
+
 
 
         if(writer){
