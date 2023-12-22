@@ -82,6 +82,8 @@ function loadVideo(input){
     Alpine.store('download_name',  download_name);
     Alpine.store('filename',  file.name);
 
+
+    gtag('event', 'load_video', {});
 }
 
 async function setupPreview(data) {
@@ -115,6 +117,8 @@ async function setupPreview(data) {
 
 
     async function showPreview(){
+
+        gtag('event', 'preview', {});
 
         const fullScreenButton = document.getElementById('full-screen');
 
@@ -208,6 +212,8 @@ async function setupPreview(data) {
 //===================  Process ===========================
 
 async function initRecording(){
+
+    gtag('event', 'start', {});
 
     Alpine.store('state', 'loading');
 
@@ -454,6 +460,7 @@ async function initRecording(){
         Alpine.store('state', 'complete');
 
 
+        gtag('event', 'finish', {});
 
     } catch (e) {
 
