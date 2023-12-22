@@ -23,9 +23,7 @@ let data;
 let gpu;
 let websr;
 
-Alpine.store('state', 'init');
 
-Alpine.start();
 
 
 document.addEventListener("DOMContentLoaded", index);
@@ -34,6 +32,10 @@ document.addEventListener("DOMContentLoaded", index);
 //===================  Initial Load ===========================
 
 async function index() {
+
+    Alpine.store('state', 'init');
+
+    Alpine.start();
 
     upscaled_canvas = document.getElementById("upscaled");
     original_canvas = document.getElementById('original');
