@@ -273,6 +273,7 @@ async function initRecording(){
         },
         error(e) {
             showError(e.message);
+            Sentry.captureException(e);
         }
     });
 
@@ -287,6 +288,7 @@ async function initRecording(){
                 muxer.addVideoChunk(chunk, meta);
             } catch (e) {
                 showError(e.message);
+                Sentry.captureException(e);
             }
 
 
@@ -294,6 +296,7 @@ async function initRecording(){
         },
         error: (e) => {
             showError(e.message);
+            Sentry.captureException(e);
         }
     });
 
@@ -454,7 +457,9 @@ async function initRecording(){
 
     } catch (e) {
 
+
         showError(e.message);
+        Sentry.captureException(e);
 
     }
 
