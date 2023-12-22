@@ -231,14 +231,12 @@ async function initRecording(){
 
 
     Alpine.store('progress', 0);
-
+    Alpine.store('state', 'processing');
 
     let { config, encoded_chunks } = await getMP4Data(data, 'video');
 
+    
 
-    let finished = false;
-
-    Alpine.store('state', 'processing');
     const target = writer ? new FileSystemWritableFileStreamTarget(writer) : new ArrayBufferTarget();
 
     const muxer = new Muxer({
@@ -433,24 +431,32 @@ async function initRecording(){
 
     clearInterval(flush_check);
 
+    let audioData;
+
+
+    try {
+        audioData = await getMP4Data(data, 'audio');
+
+    } catch (e) {
+        console.log('No audio track found, skipping....');
+
+    }
 
     try{
-        const audioData  = await getMP4Data(data, 'audio');
 
-        const source_audio_chunks = audioData.encoded_chunks;
+        if(audioData) {
 
+            const source_audio_chunks = audioData.encoded_chunks;
 
-        for (let audio_chunk of source_audio_chunks){
-            muxer.addAudioChunk(audio_chunk);
+            for (let audio_chunk of source_audio_chunks){
+                muxer.addAudioChunk(audio_chunk);
+            }
+
         }
-
 
         Alpine.store('progress', 100);
 
-
         muxer.finalize();
-
-
 
         if(writer){
             await writer.close();
@@ -461,11 +467,9 @@ async function initRecording(){
 
         Alpine.store('state', 'complete');
 
-
         gtag('event', 'finish', {});
 
     } catch (e) {
-
 
         showError(e.message);
         Sentry.captureException(e);
