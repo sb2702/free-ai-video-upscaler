@@ -46,7 +46,11 @@
 <p id="hero-text" x-show="$store.state === 'init'">This free tool applies an <a href="https://github.com/sb2702/websr">AI Upscaling algorithm</a> on your video, right in the browser. It is much faster, though not as powerful, as other popular AI Upscaling software.</p>
 
 <div id="unsupported-panel" class="panel"   x-show="$store.state === 'unsupported'">
-    <p class="panel-text">Your browser does not support <span id="missing-component" x-text="$store.component"></span>, a required browser feature for this tool.</p>
+    <p class="panel-text">Your browser does not support <span id="missing-component" x-text="$store.component"></span>, a required browser feature for this tool.
+    <br>
+        <br>
+        Try using the latest version of <img src="chrome.svg" style="display: inline;" width="25" height="25"> Chrome or <img src="edge.svg" style="display: inline;" width="25" height="25"> Edge on a 💻 Laptop or 🖥️ Desktop.
+    </p>
 </div>
 
 
