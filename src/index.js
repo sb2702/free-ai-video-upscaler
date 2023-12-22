@@ -233,9 +233,20 @@ async function initRecording(){
     Alpine.store('progress', 0);
     Alpine.store('state', 'processing');
 
-    let { config, encoded_chunks } = await getMP4Data(data, 'video');
+    let videoData;
 
-    
+    try{
+        videoData = await getMP4Data(data, 'video');
+    } catch (e) {
+        console.warn('No video data found');
+
+    }
+
+    if(!videoData) return showError(`There was an error loading the video track. Is there something wrong with the video file?`);
+
+    const config = videoData.config;
+    const encoded_chunks = videoData.encoded_chunks;
+
 
     const target = writer ? new FileSystemWritableFileStreamTarget(writer) : new ArrayBufferTarget();
 
