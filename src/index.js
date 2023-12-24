@@ -36,6 +36,7 @@ async function index() {
     Alpine.store('state', 'init');
 
     Alpine.start();
+    document.body.style.display = "block";
 
     upscaled_canvas = document.getElementById("upscaled");
     original_canvas = document.getElementById('original');
