@@ -1,6 +1,7 @@
 import WebSR from  '@websr/websr';
 import { Muxer, ArrayBufferTarget, FileSystemWritableFileStreamTarget } from 'mp4-muxer';
-import weights from './cnn-2x-s.json'
+import light_weights from './cnn-2x-s.json'
+import medium_weights from './cnn-2x-m.json'
 import Alpine from 'alpinejs'
 import ImageCompare from './lib/image-compare-viewer.min';
 import { MP4Demuxer } from "./demuxer_mp4";
@@ -98,6 +99,8 @@ async function setupPreview(data) {
 
     video.src = URL.createObjectURL(fileBlob);
 
+    let network = 'light';
+
 
     const imageCompare = document.getElementById('image-compare');
 
@@ -128,12 +131,13 @@ async function setupPreview(data) {
         websr = new WebSR({
             source: video,
             network_name: "anime4k/cnn-2x-s",
-            weights:weights,
+            weights:light_weights,
             gpu: gpu,
             canvas: upscaled_canvas
         });
 
         const bitmap = await createImageBitmap(video);
+
 
 
 
@@ -205,6 +209,31 @@ async function setupPreview(data) {
 
 
         Alpine.store('state', 'preview');
+
+
+        const networks = {
+            'light': {
+                name: "anime4k/cnn-2x-s",
+                weights: light_weights
+            },
+            'medium': {
+                name: "anime4k/cnn-2x-m",
+                weights: medium_weights
+            }
+        }
+
+
+        window.switchNetwork = async function(el){
+            if(el.value !== network){
+                network = el.value;
+                websr.switchNetwork(networks[network].name,networks[network].weights);
+
+                const bitmap = await createImageBitmap(video);
+                await websr.render(bitmap);
+
+            }
+        }
+
 
 
     }

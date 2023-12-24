@@ -41,8 +41,13 @@
 <body x-data="{}" style="display: none;">
 
 
-<h1 id="title">Free AI Video Upscaler</h1>
+<h1 id="title" x-show="$store.state === 'init' || $store.state === 'unsupported'">Free AI Video Upscaler</h1>
 <p id="hero-text" x-show="$store.state === 'init' || $store.state === 'unsupported'">Upscale videos <a href="https://github.com/sb2702/websr">with AI</a> right in your browser - no signups, installation or config necessary. It is much faster, though not as powerful, as other popular AI Upscaling software.</p>
+
+<div  x-show="!($store.state === 'init' || $store.state === 'unsupported')">
+    <br>
+    <br>
+</div>
 
 <div id="unsupported-panel" class="panel"   x-show="$store.state === 'unsupported'" style="height: fit-content;">
     <p class="panel-text">Your browser does not support <span id="missing-component" x-text="$store.component"></span>, a required browser feature for this tool.  <br> <br> Try using the latest version of <img src="chrome.svg" style="display: inline;" width="25" height="25"> Chrome or <img src="edge.svg" style="display: inline;" width="25" height="25"> Edge on a 💻 Laptop or 🖥️ Desktop.
@@ -54,6 +59,7 @@
 
     <p class="panel-text" style="margin: 30px 0; font-size: 1.25rem;"> For what it's worth, here's how it's supposed to work <a href="https://www.youtube.com/watch?v=wUuFJpo8Hfo" target="_blank">[YouTube link]</a></p>
 </div>
+
 
 
 
@@ -71,6 +77,8 @@
     <button type="button" class="btn btn-primary"  id="input-button" onclick="chooseFile(this)">Choose a video file</button>
 </div>
 
+
+
 <div id="start-panel" class="panel" x-show="$store.state === 'preview' || $store.state === 'processing' || $store.state === 'complete'">
     <div id="image-compare">
         <canvas id="original"></canvas>
@@ -84,7 +92,33 @@
     <br>
 
     <div id="preview"  x-show="$store.state === 'preview'">
+
         <p style="width: 100%;">Upscaling <span x-text="$store.filename" class="monospace"></span>  to  <span class="monospace"><span x-text="$store.width*2" ></span>x<span x-text="$store.height*2"></span></span>. Output: ~ <span class="monospace" x-text="$store.size"></span></p>
+
+
+        <div id="settings" style="margin-top: 20px; margin-bottom: 20px; width: 100%; height: fit-content; border-radius: 10px; font-size: 1rem;" class="panel">
+
+            <table style="width: 100%;">
+                <tr style="display: none;">
+                    <th style="width: 50%;">Settings</th>
+                    <th></th>
+                </tr>
+                <tr title="Lighter is faster, but Medium has better quality">
+                    <td style="width: 50%;" >
+                        Upscaling Strength
+                    </td>
+                    <td style="float: right">
+                        <input type="radio" class="btn-check" name="options" id="option1"  value="light"  onclick="switchNetwork(this);" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="option1">Light</label>
+
+                        <input type="radio" class="btn-check" name="options" id="option2" value="medium" onclick="switchNetwork(this);" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="option2">Medium</label>
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+
 
         <button  type="button" class="btn btn-primary start"  onclick="initRecording()" x-show="$store.target === 'writer'">Choose output location &nbsp
             <img src="folder.svg" width="10" height="10">
@@ -94,6 +128,10 @@
             <img src="play.svg" width="10" height="10">
         </button>
     </div>
+
+
+
+
 
     <div id="info"  x-show="$store.state === 'processing'">
         <p>Upscaling <span x-text="$store.filename" class="monospace"></span> .Estimated time left: <span x-text="$store.eta"></span></p>
