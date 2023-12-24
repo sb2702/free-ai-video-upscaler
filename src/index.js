@@ -99,7 +99,7 @@ async function setupPreview(data) {
 
     video.src = URL.createObjectURL(fileBlob);
 
-    let network = 'light';
+    let network = 'medium';
 
 
     const imageCompare = document.getElementById('image-compare');
@@ -130,8 +130,8 @@ async function setupPreview(data) {
 
         websr = new WebSR({
             source: video,
-            network_name: "anime4k/cnn-2x-s",
-            weights:light_weights,
+            network_name: "anime4k/cnn-2x-m",
+            weights:medium_weights,
             gpu: gpu,
             canvas: upscaled_canvas
         });
