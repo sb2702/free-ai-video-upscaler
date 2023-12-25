@@ -381,9 +381,11 @@ async function initRecording(){
 
     let flush_check = setInterval(function () {
 
-        if(performance.now() - last_decode > 1000) decoder.flush()
+        if(performance.now() - last_decode > 1000 && (encoded_chunks.length - current_frame < 10)) decoder.flush()
 
     }, 100);
+
+    let current_frame;
 
     for (let i =0; i < decode_promises.length; i++){
 
@@ -402,6 +404,7 @@ async function initRecording(){
         ctx.transferFromImageBitmap(bitmap2);
         await render_promise;
 
+        current_frame = i;
 
         const bitmap = await createImageBitmap(upscaled_canvas);
 
