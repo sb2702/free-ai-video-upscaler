@@ -1,8 +1,5 @@
 import WebSR from  '@websr/websr';
 import { Muxer, ArrayBufferTarget, FileSystemWritableFileStreamTarget } from 'mp4-muxer';
-import light_weights from './cnn-2x-s.json'
-import medium_weights from './cnn-2x-m.json'
-import large_weights from './cnn-2x-l.json'
 import Alpine from 'alpinejs'
 import ImageCompare from './lib/image-compare-viewer.min';
 import { MP4Demuxer } from "./demuxer_mp4";
@@ -25,7 +22,23 @@ let data;
 let gpu;
 let websr;
 
-
+const weights = {
+    'large':
+        {
+            'rl': require('./weights/cnn-2x-l-rl.json'),
+            'an': require('./weights/cnn-2x-l-an.json'),
+        },
+    'medium':
+        {
+            'rl': require('./weights/cnn-2x-m-rl.json'),
+            'an': require('./weights/cnn-2x-m-an.json'),
+        },
+    'small':
+        {
+            'rl': require('./weights/cnn-2x-s-rl.json'),
+            'an': require('./weights/cnn-2x-s-an.json'),
+        }
+}
 
 
 document.addEventListener("DOMContentLoaded", index);
@@ -100,11 +113,11 @@ async function setupPreview(data) {
 
     video.src = URL.createObjectURL(fileBlob);
 
-    let network = 'medium';
+    let size = 'medium';
+    let content = 'rl';
 
 
     const imageCompare = document.getElementById('image-compare');
-
 
 
 
@@ -132,7 +145,7 @@ async function setupPreview(data) {
         websr = new WebSR({
             source: video,
             network_name: "anime4k/cnn-2x-m",
-            weights:medium_weights,
+            weights:weights[size][content],
             gpu: gpu,
             canvas: upscaled_canvas
         });
@@ -213,25 +226,33 @@ async function setupPreview(data) {
 
 
         const networks = {
-            'light': {
+            'small': {
                 name: "anime4k/cnn-2x-s",
-                weights: light_weights
             },
             'medium': {
                 name: "anime4k/cnn-2x-m",
-                weights: medium_weights
             },
-            'heavy': {
+            'large': {
                 name: "anime4k/cnn-2x-l",
-                weights: large_weights
             }
         }
 
 
-        window.switchNetwork = async function(el){
-            if(el.value !== network){
-                network = el.value;
-                websr.switchNetwork(networks[network].name,networks[network].weights);
+        window.switchNetworkSize = async function(el){
+            if(el.value !== size){
+                size = el.value;
+                websr.switchNetwork(networks[size].name, weights[size][content]);
+
+                const bitmap = await createImageBitmap(video);
+                await websr.render(bitmap);
+
+            }
+        }
+
+        window.switchNetworkStyle = async function(el){
+            if(el.value !== content){
+                content = el.value;
+                websr.switchNetwork(networks[size].name, weights[size][content]);
 
                 const bitmap = await createImageBitmap(video);
                 await websr.render(bitmap);

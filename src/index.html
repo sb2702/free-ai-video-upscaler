@@ -103,23 +103,40 @@
                     <th style="width: 50%;">Settings</th>
                     <th></th>
                 </tr>
-                <tr title="Small is faster, Large is slower but has the most quality improvement">
+                <tr title="Small is faster, Large is slower but has the most quality improvement" style="height: 60px;">
                     <td style="width: 40%;" >
                         Upscaling Network
                     </td>
                     <td style="float: right">
-                        <input type="radio" class="btn-check" name="options" id="option1"  value="light"  onclick="switchNetwork(this);" autocomplete="off">
+                        <input type="radio" class="btn-check" name="options" id="option1"  value="small"  onclick="switchNetworkSize(this);" autocomplete="off">
                         <label class="btn btn-outline-primary" for="option1">Small
                         </label>
 
                         &nbsp;
-                        <input type="radio" class="btn-check" name="options" id="option2" value="medium" onclick="switchNetwork(this);" autocomplete="off" checked>
+                        <input type="radio" class="btn-check" name="options" id="option2" value="medium" onclick="switchNetworkSize(this);" autocomplete="off" checked>
                         <label class="btn btn-outline-primary" for="option2">Medium
                         </label>
        &nbsp;
-                        <input type="radio" class="btn-check" name="options" id="option3" value="heavy" onclick="switchNetwork(this);" autocomplete="off">
+                        <input type="radio" class="btn-check" name="options" id="option3" value="large" onclick="switchNetworkSize(this);" autocomplete="off">
                         <label class="btn btn-outline-primary" for="option3">Large
                         </label>
+                    </td>
+                </tr>
+
+                <tr  style="height: 60px;">
+                    <td style="width: 40%;" >
+                        Content Style
+                    </td>
+                    <td style="float: right">
+                        <input type="radio" class="btn-check" name="options2" id="option4"  value="an"  onclick="switchNetworkStyle(this);" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="option4">Animated
+                        </label>
+
+                        &nbsp;
+                        <input type="radio" class="btn-check" name="options2" id="option5" value="rl" onclick="switchNetworkStyle(this);" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="option5">Real Life
+                        </label>
+                        &nbsp;
                     </td>
                 </tr>
             </table>
