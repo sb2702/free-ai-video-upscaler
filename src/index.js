@@ -2,6 +2,7 @@ import WebSR from  '@websr/websr';
 import { Muxer, ArrayBufferTarget, FileSystemWritableFileStreamTarget } from 'mp4-muxer';
 import light_weights from './cnn-2x-s.json'
 import medium_weights from './cnn-2x-m.json'
+import large_weights from './cnn-2x-l.json'
 import Alpine from 'alpinejs'
 import ImageCompare from './lib/image-compare-viewer.min';
 import { MP4Demuxer } from "./demuxer_mp4";
@@ -219,6 +220,10 @@ async function setupPreview(data) {
             'medium': {
                 name: "anime4k/cnn-2x-m",
                 weights: medium_weights
+            },
+            'heavy': {
+                name: "anime4k/cnn-2x-l",
+                weights: large_weights
             }
         }
 
