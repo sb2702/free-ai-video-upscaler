@@ -123,7 +123,7 @@
                     </td>
                 </tr>
 
-                <tr  style="height: 60px;">
+                <tr  style="height: 60px;" x-show="$store.style === 'unknown'">
                     <td style="width: 40%;" >
                         Content Style
                     </td>
@@ -133,11 +133,11 @@
                         </label>
 
                         &nbsp;
-                        <input type="radio" class="btn-check" name="options2" id="option5" value="rl" onclick="switchNetworkStyle(this);" autocomplete="off" checked>
+                        <input type="radio" class="btn-check" name="options2" id="option5" value="rl" onclick="switchNetworkStyle(this);" autocomplete="off" >
                         <label class="btn btn-outline-primary" for="option5">Real Life
                         </label>
                         &nbsp;
-                        <input type="radio" class="btn-check" name="options2" id="option6" value="3d" onclick="switchNetworkStyle(this);" autocomplete="off">
+                        <input type="radio" class="btn-check" name="options2" id="option6" value="3d" onclick="switchNetworkStyle(this);" autocomplete="off" checked>
                         <label class="btn btn-outline-primary" for="option6">3D
                         </label>
             

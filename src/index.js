@@ -24,6 +24,10 @@ let original_canvas;
 let video;
 let ctx;
 
+let size = 'medium';
+let content = 'rl';
+
+
 let tfliteModelP;
 let tfliteModel;
 
@@ -54,6 +58,20 @@ const weights = {
 }
 
 
+const networks = {
+    'small': {
+        name: "anime4k/cnn-2x-s",
+    },
+    'medium': {
+        name: "anime4k/cnn-2x-m",
+    },
+    'large': {
+        name: "anime4k/cnn-2x-l",
+    }
+}
+
+
+
 document.addEventListener("DOMContentLoaded", index);
 
 
@@ -68,7 +86,7 @@ async function index() {
     Alpine.start();
     document.body.style.display = "block";
 
-    tfliteModelP =  tflite.loadTFLiteModel('./content_detection_mobilenet_v3_small_075_224.tflite',  {numThreads: navigator.hardwareConcurrency / 2} );
+    tfliteModelP =  tflite.loadTFLiteModel('./content_detection_mobilenet_v3.tflite',  {numThreads: 1} );
 
     upscaled_canvas = document.getElementById("upscaled");
     original_canvas = document.getElementById('original');
@@ -121,6 +139,17 @@ function loadVideo(input){
     gtag('event', 'load_video', {});
 }
 
+async function updateNetwork(){
+
+    console.log("Updating network with size", size, "Style", content);
+
+    websr.switchNetwork(networks[size].name, weights[size][content]);
+
+    const bitmap = await createImageBitmap(video);
+    await websr.render(bitmap);
+
+}
+
 async function setupPreview(data) {
 
 
@@ -131,8 +160,6 @@ async function setupPreview(data) {
 
     video.src = URL.createObjectURL(fileBlob);
 
-    let size = 'medium';
-    let content = 'rl';
 
 
     const imageCompare = document.getElementById('image-compare');
@@ -150,8 +177,13 @@ async function setupPreview(data) {
         original_canvas.width = video.videoWidth;
         original_canvas.height = video.videoHeight;
         new ImageCompare(imageCompare).mount();
-        video.requestVideoFrameCallback(showPreview);
+        video.currentTime = video.duration * 0.2;
+        if(video.requestVideoFrameCallback)  video.requestVideoFrameCallback(showPreview);
+        else requestAnimationFrame(showPreview);
+
     }
+
+
 
 
     async function showPreview(){
@@ -187,12 +219,79 @@ async function setupPreview(data) {
         contentDetectionCanvas.height = 224;
         const contentDetectionCtx = contentDetectionCanvas.getContext('2d');
 
-        document.body.appendChild(contentDetectionCanvas);
-
-        contentDetectionCtx.drawImage(video, video.videoWidth/2-112, video.videoHeight/2-112, 224, 224, 0, 0, 224, 224 );
-
-
         tfliteModel = await tfliteModelP;
+
+
+
+
+        async function detectContentType(){
+
+            const preds = {
+                'animation': [],
+                'rl': []
+            }
+
+            for (let i=0; i < 5; i++){
+
+                video.currentTime = (i/10 + 0.1)*video.duration;
+
+                if(video.requestVideoFrameCallback) await new Promise((resolve => video.requestVideoFrameCallback(resolve)));
+                else await new Promise((resolve => requestAnimationFrame(resolve)));
+
+
+                contentDetectionCtx.drawImage(video, video.videoWidth/2-112, video.videoHeight/2-112, 224, 224, 0, 0, 224, 224 );
+
+                const img = tf.browser.fromPixels(contentDetectionCanvas);
+
+
+                const input = tf.div(tf.expandDims(img), 255);
+
+                let outputTensor = tfliteModel.predict(input);
+
+                const values = outputTensor.dataSync();
+
+                preds['animation'].push(values[0]);
+                preds['rl'].push(values[1]);
+
+
+            }
+            video.currentTime =video.duration*0.2;
+
+            if(video.requestVideoFrameCallback) await new Promise((resolve => video.requestVideoFrameCallback(resolve)));
+            else await new Promise((resolve => requestAnimationFrame(resolve)));
+
+
+            const animation_score = preds['animation'].reduce((partialSum, a)=> partialSum +a, 0);
+            const rl_score = preds['rl'].reduce((partialSum, a)=> partialSum +a, 0);
+
+            const unk_thresh = 2;
+
+            if(animation_score - rl_score > unk_thresh) return 'an'
+            else if (rl_score  - animation_score > unk_thresh) return 'rl';
+            else return  null;
+
+
+
+        }
+
+        
+        let detected = await detectContentType();
+
+        if(detected){
+            content = detected;
+            await updateNetwork();
+            Alpine.store('style', content);
+        } else {
+            // Just a guess
+            // I tried training a 3 class network, but it was producing really innacurate results compared to just real life vs 2d animation
+            // Decided I'd rather do a good job on 2d animations and real life, and then show a menu if it's maybe something else or we don't know
+            content = '3d';
+            await updateNetwork();
+            Alpine.store('style', 'unknown');
+        }
+
+
+
 
 
         function setFullScreenLocation(){
@@ -256,37 +355,20 @@ async function setupPreview(data) {
         Alpine.store('state', 'preview');
 
 
-        const networks = {
-            'small': {
-                name: "anime4k/cnn-2x-s",
-            },
-            'medium': {
-                name: "anime4k/cnn-2x-m",
-            },
-            'large': {
-                name: "anime4k/cnn-2x-l",
-            }
-        }
-
 
         window.switchNetworkSize = async function(el){
             if(el.value !== size){
                 size = el.value;
-                websr.switchNetwork(networks[size].name, weights[size][content]);
 
-                const bitmap = await createImageBitmap(video);
-                await websr.render(bitmap);
-
+                await updateNetwork();
             }
         }
 
         window.switchNetworkStyle = async function(el){
             if(el.value !== content){
                 content = el.value;
-                websr.switchNetwork(networks[size].name, weights[size][content]);
 
-                const bitmap = await createImageBitmap(video);
-                await websr.render(bitmap);
+                await updateNetwork();
 
             }
         }
