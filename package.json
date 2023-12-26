@@ -20,6 +20,9 @@
   "dependencies": {
     "@babel/core": "^7.1.6",
     "@popperjs/core": "^2.11.8",
+    "@tensorflow/tfjs-backend-cpu": "^4.15.0",
+    "@tensorflow/tfjs-core": "^4.15.0",
+    "@tensorflow/tfjs-tflite": "^0.0.1-alpha.10",
     "@websr/websr": "^0.0.11",
     "alpinejs": "3.4.2",
     "babel-loader": "^9.1.3",

@@ -4,6 +4,14 @@ import Alpine from 'alpinejs'
 import ImageCompare from './lib/image-compare-viewer.min';
 import { MP4Demuxer } from "./demuxer_mp4";
 
+
+
+// Tensorflow dependencies are for the content detection model to determine if it's animation, real life or 3d. Upscaling networks are implemented directly in WebGPU via WebSR
+import '@tensorflow/tfjs-backend-cpu';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tflite from '@tensorflow/tfjs-tflite';
+
+
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css";
@@ -16,6 +24,8 @@ let original_canvas;
 let video;
 let ctx;
 
+let tfliteModelP;
+let tfliteModel;
 
 let download_name;
 let data;
@@ -47,6 +57,8 @@ const weights = {
 document.addEventListener("DOMContentLoaded", index);
 
 
+
+
 //===================  Initial Load ===========================
 
 async function index() {
@@ -55,6 +67,8 @@ async function index() {
 
     Alpine.start();
     document.body.style.display = "block";
+
+    tfliteModelP =  tflite.loadTFLiteModel('./content_detection_mobilenet_v3_small_075_224.tflite',  {numThreads: navigator.hardwareConcurrency / 2} );
 
     upscaled_canvas = document.getElementById("upscaled");
     original_canvas = document.getElementById('original');
@@ -108,6 +122,7 @@ function loadVideo(input){
 }
 
 async function setupPreview(data) {
+
 
     video = document.createElement('video');
 
@@ -167,6 +182,18 @@ async function setupPreview(data) {
 
         video.style.height = '100%';
 
+        const contentDetectionCanvas = document.createElement('canvas');
+        contentDetectionCanvas.width = 224;
+        contentDetectionCanvas.height = 224;
+        const contentDetectionCtx = contentDetectionCanvas.getContext('2d');
+
+        document.body.appendChild(contentDetectionCanvas);
+
+        contentDetectionCtx.drawImage(video, video.videoWidth/2-112, video.videoHeight/2-112, 224, 224, 0, 0, 224, 224 );
+
+
+        tfliteModel = await tfliteModelP;
+
 
         function setFullScreenLocation(){
             fullScreenButton.style.left = `${imageCompare.offsetLeft + 550}px`;
@@ -176,6 +203,7 @@ async function setupPreview(data) {
         setTimeout(setFullScreenLocation, 20);
         setTimeout(setFullScreenLocation, 60);
         setTimeout(setFullScreenLocation, 200);
+
 
 
 
