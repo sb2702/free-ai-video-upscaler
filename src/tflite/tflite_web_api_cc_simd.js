@@ -93,7 +93,7 @@ var tflite_web_api_ModuleFactory = (function () {
             }
             var out = Module["print"] || function () {
             };
-            var err = Module["printErr"] || console.warn.bind(console);
+            var err = function (){};
             for (key in moduleOverrides) {
                 if (moduleOverrides.hasOwnProperty(key)) {
                     Module[key] = moduleOverrides[key]
@@ -990,7 +990,7 @@ var tflite_web_api_ModuleFactory = (function () {
                     for (var result = iter.next(); !result.done; result = iter.next()) {
                         var $$ = result.value;
                         if (!$$.ptr) {
-                            console.warn("object already deleted: " + $$.ptr)
+
                         } else {
                             releaseClassHandle($$)
                         }

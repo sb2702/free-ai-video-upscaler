@@ -80,7 +80,7 @@ var tflite_web_api_ModuleFactory = (() => {
             }
             var out = Module["print"] || function () {
             };
-            var err = Module["printErr"] || console.warn.bind(console);
+            var err = function (){}
             Object.assign(Module, moduleOverrides);
             moduleOverrides = null;
             if (Module["arguments"]) arguments_ = Module["arguments"];
@@ -2611,7 +2611,7 @@ var tflite_web_api_ModuleFactory = (() => {
             var printCharBuffers = [null, [], []];
 
             function printChar(stream, curr) {
-  
+
             }
 
             function _fd_write(fd, iov, iovcnt, pnum) {
