@@ -217,7 +217,7 @@ async function setupPreview(data) {
         const contentDetectionCanvas = document.createElement('canvas');
         contentDetectionCanvas.width = 224;
         contentDetectionCanvas.height = 224;
-        const contentDetectionCtx = contentDetectionCanvas.getContext('2d');
+        const contentDetectionCtx = contentDetectionCanvas.getContext('2d', {willReadFrequently: true});
 
         tfliteModel = await tfliteModelP;
 
