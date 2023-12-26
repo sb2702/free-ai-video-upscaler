@@ -27,16 +27,19 @@ const weights = {
         {
             'rl': require('./weights/cnn-2x-l-rl.json'),
             'an': require('./weights/cnn-2x-l-an.json'),
+            '3d': require('./weights/cnn-2x-l-3d.json'),
         },
     'medium':
         {
             'rl': require('./weights/cnn-2x-m-rl.json'),
             'an': require('./weights/cnn-2x-m-an.json'),
+            '3d': require('./weights/cnn-2x-m-3d.json'),
         },
     'small':
         {
             'rl': require('./weights/cnn-2x-s-rl.json'),
             'an': require('./weights/cnn-2x-s-an.json'),
+            '3d': require('./weights/cnn-2x-s-3d.json'),
         }
 }
 
