@@ -274,7 +274,7 @@ async function setupPreview(data) {
 
         }
 
-        
+
         let detected = await detectContentType();
 
         if(detected){
