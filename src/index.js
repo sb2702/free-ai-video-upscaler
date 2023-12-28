@@ -219,9 +219,7 @@ async function setupPreview(data) {
         contentDetectionCanvas.height = 224;
         const contentDetectionCtx = contentDetectionCanvas.getContext('2d', {willReadFrequently: true});
 
-        tfliteModel = await tfliteModelP;
-
-
+        let detected= null;
 
 
         async function detectContentType(){
@@ -275,7 +273,19 @@ async function setupPreview(data) {
         }
 
 
-        let detected = await detectContentType();
+        try{
+            tfliteModel = await tfliteModelP;
+
+            detected = await detectContentType();
+        } catch (e) {
+
+            console.warn('Unable to load TFLite Model');
+        }
+
+
+
+
+
 
         if(detected){
             content = detected;
