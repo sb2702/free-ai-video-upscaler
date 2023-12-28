@@ -407,7 +407,15 @@ async function initRecording(){
 
     // Max Blob size - 100 MB
     if(estimated_size > 100*1024*1024){
-        writer = await showFilePicker();
+        try{
+            writer = await showFilePicker();
+        } catch (e) {
+            console.warn("User aborted request");
+            return Alpine.store('state', 'preview');
+        }
+
+
+
     }
 
 
