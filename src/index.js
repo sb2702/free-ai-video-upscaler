@@ -179,7 +179,7 @@ async function setupPreview(data) {
         original_canvas.width = video.videoWidth;
         original_canvas.height = video.videoHeight;
         new ImageCompare(imageCompare).mount();
-        video.currentTime = video.duration * 0.2;
+        video.currentTime = video.duration * 0.2 || 0;
         if(video.requestVideoFrameCallback)  video.requestVideoFrameCallback(showPreview);
         else requestAnimationFrame(showPreview);
 
@@ -255,7 +255,7 @@ async function setupPreview(data) {
 
 
             }
-            video.currentTime =video.duration*0.2;
+            video.currentTime = video.duration * 0.2 || 0;
 
             if(video.requestVideoFrameCallback) await new Promise((resolve => video.requestVideoFrameCallback(resolve)));
             else await new Promise((resolve => requestAnimationFrame(resolve)));
