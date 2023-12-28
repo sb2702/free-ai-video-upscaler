@@ -524,7 +524,14 @@ async function initRecording(){
             const callback = function (frame){ resolve(frame);}
             decode_callbacks.push(callback);
         }));
-        decoder.decode(chunk);
+
+        try{
+            decoder.decode(chunk);
+        } catch (e) {
+            showError(e.message);
+            Sentry.captureException(e);
+        }
+
     }
     
     const encode_promises = [];
@@ -588,7 +595,15 @@ async function initRecording(){
         }));
 
 
-        encoder.encode(new_frame, {keyFrame: source_chunk.type === 'key'});
+        
+        try{
+            encoder.encode(new_frame, {keyFrame: source_chunk.type === 'key'});
+        } catch (e) {
+            showError(e.message);
+            Sentry.captureException(e);
+        }
+
+
 
         frame.close();
         new_frame.close();
@@ -606,7 +621,14 @@ async function initRecording(){
                 const callback = function (frame){ resolve(frame);}
                 decode_callbacks.push(callback);
             }));
-            decoder.decode(chunk);
+
+            try{
+                decoder.decode(chunk);
+            } catch (e) {
+                showError(e.message);
+                Sentry.captureException(e);
+            }
+
 
             last_decode = performance.now();
         }
