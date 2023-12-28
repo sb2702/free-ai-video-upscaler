@@ -86,7 +86,7 @@ async function index() {
     Alpine.start();
     document.body.style.display = "block";
 
-    tfliteModelP =  tflite.loadTFLiteModel('./content_detection_mobilenet_v3.tflite',  {numThreads: 1} );
+    tfliteModelP =  tflite.loadTFLiteModel('./content_detection_mobilenet_v3.tflite',  {numThreads: 1, enableProfiling: false, maxProfilingBufferEntries: 1024});
 
     upscaled_canvas = document.getElementById("upscaled");
     original_canvas = document.getElementById('original');
