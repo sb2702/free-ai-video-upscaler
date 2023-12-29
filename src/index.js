@@ -5,13 +5,6 @@ import ImageCompare from './lib/image-compare-viewer.min';
 import { MP4Demuxer } from "./demuxer_mp4";
 
 
-
-// Tensorflow dependencies are for the content detection model to determine if it's animation, real life or 3d. Upscaling networks are implemented directly in WebGPU via WebSR
-import '@tensorflow/tfjs-backend-cpu';
-import * as tf from '@tensorflow/tfjs-core';
-import * as tflite from '@tensorflow/tfjs-tflite';
-
-
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css";
@@ -74,7 +67,8 @@ const networks = {
 
 document.addEventListener("DOMContentLoaded", index);
 
-
+let tf;
+let tflite;
 
 
 //===================  Initial Load ===========================
@@ -96,7 +90,13 @@ async function index() {
     if(!gpu) return showUnsupported("WebGPU");
     window.chooseFile =  chooseFile;
 
+    await import( '@tensorflow/tfjs-backend-cpu');
+    tf = await import('@tensorflow/tfjs-core');
+    tflite =  await import('@tensorflow/tfjs-tflite');
     tfliteModelP =  tflite.loadTFLiteModel('./content_detection_mobilenet_v3.tflite',  {numThreads: 1, enableProfiling: false, maxProfilingBufferEntries: 1024});
+
+
+
 
 
 }
