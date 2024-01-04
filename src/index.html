@@ -43,7 +43,13 @@
 
 
 <h1 id="title" x-show="$store.state === 'init' || $store.state === 'unsupported'">Free AI Video Upscaler</h1>
-<p id="hero-text" x-show="$store.state === 'init' || $store.state === 'unsupported'">Upscale videos <a href="https://github.com/sb2702/websr">with AI</a> for free, right in your browser - no signups, installation or config necessary. It is much faster, though not as powerful, as other popular AI Upscaling software.</p>
+<p id="hero-text" x-show="$store.state === 'init' || $store.state === 'unsupported'">Upscale videos <a href="https://github.com/sb2702/websr">with AI</a> for free, right in your browser - no signups, installation or config necessary. It is much faster, though not as powerful, as other popular AI Upscaling software.
+
+<span x-show="$store.state === 'info'">
+    This is a quick, free no-nonsense tool for upscaling videos with AI right in the browser. There is no software to install, and no registration or sign up required. All you need to do is input a video, and your browser will do all of the AI Upscaling and video processing. This software tool is completely free and open source, and works particularly well for animated content.
+I built it because from previous experience as a casual user who just wants to upscale a few videos you have around, it's surprisingly frustrating. There are paid tools like <a href="https://www.topazlabs.com/">Topaz Labs </a>  which are excellent but also overkill for non-professional work, or open source projects like <a href="https://github.com/k4yt3x/video2x"> Video2X </a>  which require a lot of setup and configuration. This tool, in contrast, is designed to be quick, fast, free, simple and easy to use. It is based on my <a href="https://github.com/sb2702/websr">WebSR</a> project, which is an open-source WebSDK for applying real-time super resolution to videos on the web. It works by porting several open source AI Upscaling algorithms like <a href="https://github.com/bloc97/Anime4K"> Anime4K</a> and <a href="https://github.com/xinntao/Real-ESRGAN">RealESRGAN</a> into WebGPU. The WebSR SDK then allows you to easily apply these AI Upscaling (Super resolution) algorithms to each frame of a video directly in the browser.
+</span>
+</p>
 
 <div  x-show="!($store.state === 'init' || $store.state === 'unsupported')">
     <br>
