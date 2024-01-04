@@ -42,7 +42,7 @@
 
 
 <h1 id="title" x-show="$store.state === 'init' || $store.state === 'unsupported'">Free AI Video Upscaler</h1>
-<p id="hero-text" x-show="$store.state === 'init' || $store.state === 'unsupported'">Upscale videos <a href="https://github.com/sb2702/websr">with AI</a> right in your browser - no signups, installation or config necessary. It is much faster, though not as powerful, as other popular AI Upscaling software.</p>
+<p id="hero-text" x-show="$store.state === 'init' || $store.state === 'unsupported'">Upscale videos <a href="https://github.com/sb2702/websr">with AI</a> for free, right in your browser - no signups, installation or config necessary. It is much faster, though not as powerful, as other popular AI Upscaling software.</p>
 
 <div  x-show="!($store.state === 'init' || $store.state === 'unsupported')">
     <br>
@@ -50,7 +50,7 @@
 </div>
 
 <div id="unsupported-panel" class="panel"   x-show="$store.state === 'unsupported'" style="height: fit-content;">
-    <p class="panel-text">Your browser does not support <span id="missing-component" x-text="$store.component"></span>, a required browser feature for this tool.  <br> <br> Try using the latest version of <img src="chrome.svg" style="display: inline;" width="25" height="25"> Chrome or <img src="edge.svg" style="display: inline;" width="25" height="25"> Edge on a 💻 Laptop or 🖥️ Desktop.
+    <p class="panel-text">Your browser does not support <span id="missing-component" x-text="$store.component"></span>, a required browser feature for this tool.  <br> <br> Try using the latest version of <img  alt="You can use the latest Chrome browser" src="chrome.svg" style="display: inline;" width="25" height="25"> Chrome or <img alt="You can use the latest Edge browser"  src="edge.svg" style="display: inline;" width="25" height="25"> Edge on a 💻 Laptop or 🖥️ Desktop.
     </p>
 </div>
 
@@ -65,7 +65,7 @@
 
 <div id="loading-panel" class="panel"   x-show="$store.state === 'loading'">
 
-    <img src="loading.svg"  style="width: 256px; height: 256px; margin: auto; display: block; position: relative;">
+    <img src="loading.svg" alt="Loading"   style="width: 256px; height: 256px; margin: auto; display: block; position: relative;">
 </div>
 
 <div id="error-panel" class="panel"   x-show="$store.state === 'error'">
@@ -86,7 +86,7 @@
 
     </div>
 
-    <img src="full-screen.svg" width="15" height="15" id="full-screen" onclick="fullScreenPreview()" x-show="$store.state === 'preview'">
+    <img src="full-screen.svg" alt="Full Screen"  width="15" height="15" id="full-screen" onclick="fullScreenPreview()" x-show="$store.state === 'preview'">
 
 
     <br>
@@ -149,11 +149,11 @@
 
 
         <button  type="button" class="btn btn-primary start"  onclick="initRecording()" x-show="$store.target === 'writer'">Choose output location &nbsp
-            <img src="folder.svg" width="10" height="10">
+            <img src="folder.svg" alt="Choose a location to save the file to"  width="10" height="10">
         </button>
 
         <button  type="button" class="btn btn-primary start"  onclick="initRecording()"  x-show="$store.target === 'blob'">Start upscaling &nbsp
-            <img src="play.svg" width="10" height="10">
+            <img src="play.svg" alt="Start upscaling your video"  width="10" height="10">
         </button>
     </div>
 
@@ -173,7 +173,7 @@
 
         <div style="margin: auto; display: block; width: fit-content;" x-show="$store.target=='writer'">Saved result to <span x-text="$store.download_name" class="monospace"></span></div>
         <button  type="button" class="btn btn-outline-primary"  onclick="location.reload();">Upscale another
-            <img src="refresh.svg" width="20" height="20">
+            <img src="refresh.svg" alt="Upscale another video"  width="20" height="20">
         </button>
 
         <a  x-bind:href="$store.download_url"  x-bind:download="$store.download_name"  x-show="$store.target=='blob'" style="margin: auto;"><button  type="button" class="btn btn-primary" id="download">Download
