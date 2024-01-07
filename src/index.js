@@ -84,16 +84,26 @@ async function index() {
     upscaled_canvas = document.getElementById("upscaled");
     original_canvas = document.getElementById('original');
     ctx = original_canvas.getContext('bitmaprenderer');
-
     if(!"VideoEncoder" in window) return showUnsupported("WebCodecs");
-    gpu = await WebSR.initWebGPU();
+
+    try{
+        gpu = await WebSR.initWebGPU();
+    } catch (e) {
+        Sentry.captureException(e);
+    }
+
     if(!gpu) return showUnsupported("WebGPU");
+
     window.chooseFile =  chooseFile;
 
-    await import( '@tensorflow/tfjs-backend-cpu');
-    tf = await import('@tensorflow/tfjs-core');
-    tflite =  await import('@tensorflow/tfjs-tflite');
-    tfliteModelP =  tflite.loadTFLiteModel('./content_detection_mobilenet_v3.tflite',  {numThreads: 1, enableProfiling: false, maxProfilingBufferEntries: 1024});
+    try{
+        await import( '@tensorflow/tfjs-backend-cpu');
+        tf = await import('@tensorflow/tfjs-core');
+        tflite =  await import('@tensorflow/tfjs-tflite');
+        tfliteModelP =  tflite.loadTFLiteModel('./content_detection_mobilenet_v3.tflite',  {numThreads: 1, enableProfiling: false, maxProfilingBufferEntries: 1024});
+    } catch (e) {
+        Sentry.captureException(e);
+    }
 
 
 
