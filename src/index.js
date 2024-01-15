@@ -64,14 +64,38 @@ const networks = {
 }
 
 
+console.log("Sprig", Sprig);
+
+function uuidv4() {
+    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
+}
 
 document.addEventListener("DOMContentLoaded", index);
 
 let tf;
 let tflite;
-
+let user_id;
 
 //===================  Initial Load ===========================
+
+
+function identify_user(){
+
+
+    user_id = localStorage.getItem("user_id");
+
+    if(!user_id) {
+        user_id = uuidv4();
+        localStorage.setItem("user_id", user_id);
+    }
+
+    Sprig('setUserId', user_id);
+
+    console.log("Identified user with id", user_id);
+}
+
 
 async function index() {
 
@@ -92,6 +116,8 @@ async function index() {
         Sentry.captureException(e);
     }
 
+
+
     if(!gpu) return showUnsupported("WebGPU");
 
     window.chooseFile =  chooseFile;
@@ -101,6 +127,8 @@ async function index() {
         tf = await import('@tensorflow/tfjs-core');
         tflite =  await import('@tensorflow/tfjs-tflite');
         tfliteModelP =  tflite.loadTFLiteModel('./content_detection_mobilenet_v3.tflite',  {numThreads: 1, enableProfiling: false, maxProfilingBufferEntries: 1024});
+        identify_user();
+
     } catch (e) {
         Sentry.captureException(e);
     }
@@ -376,6 +404,18 @@ async function setupPreview(data) {
 
         Alpine.store('state', 'preview');
 
+
+
+        setTimeout(function () {
+            Sprig('identifyAndTrack', {
+                eventName: 'preview',
+                userId: user_id
+            });
+
+            gtag('event', 'sprig', {});
+
+
+        }, 5000);
 
 
         window.switchNetworkSize = async function(el){
