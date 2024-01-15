@@ -139,6 +139,8 @@ async function index() {
 function showUnsupported(text) {
     Alpine.store('component', text);
     Alpine.store('state', 'unsupported');
+
+    gtag('event', 'unsupported', {});
 }
 
 function chooseFile(e) {
