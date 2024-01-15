@@ -64,7 +64,6 @@ const networks = {
 }
 
 
-console.log("Sprig", Sprig);
 
 function uuidv4() {
     return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
@@ -92,8 +91,6 @@ function identify_user(){
     }
 
     Sprig('setUserId', user_id);
-
-    console.log("Identified user with id", user_id);
 }
 
 
@@ -180,9 +177,7 @@ function loadVideo(input){
 }
 
 async function updateNetwork(){
-
-    console.log("Updating network with size", size, "Style", content);
-
+    
     websr.switchNetwork(networks[size].name, weights[size][content]);
 
     const bitmap = await createImageBitmap(video);
