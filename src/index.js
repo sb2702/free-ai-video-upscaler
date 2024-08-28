@@ -506,21 +506,31 @@ async function initRecording(){
 
     const target = writer ? new FileSystemWritableFileStreamTarget(writer) : new ArrayBufferTarget();
 
-    const muxer = new Muxer({
-        target: target,
-        video: {
-            codec: 'avc',
-            width: video.videoWidth*2,
-            height: video.videoHeight*2
-        },
-        audio: {
+
+    const muxerOptions =
+        {
+            target: target,
+            video: {
+                codec: 'avc',
+                width: video.videoWidth*2,
+                height: video.videoHeight*2
+            },
+            firstTimestampBehavior: 'offset',
+            fastStart: writer ? false: 'in-memory'
+        };
+
+    if(audioData){
+        muxerOptions.audio = {
+
             codec:  'aac',
             numberOfChannels: audioData.config.numberOfChannels,
             sampleRate: audioData.config.sampleRate
-        },
-        firstTimestampBehavior: 'offset',
-        fastStart: writer ? false: 'in-memory'
-    });
+
+        }
+    }
+
+
+    const muxer = new Muxer(muxerOptions);
 
 
    let codec_string = video.videoWidth*video.videoHeight *4 > 1920*1080  ? 'avc1.42003e': 'avc1.42001f';
