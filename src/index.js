@@ -506,6 +506,7 @@ async function initRecording(){
 
     const target = writer ? new FileSystemWritableFileStreamTarget(writer) : new ArrayBufferTarget();
 
+    console.log(videoData.config)
 
     const muxerOptions =
         {
@@ -533,7 +534,11 @@ async function initRecording(){
     const muxer = new Muxer(muxerOptions);
 
 
-   let codec_string = video.videoWidth*video.videoHeight *4 > 1920*1080  ? 'avc1.42003e': 'avc1.42001f';
+  let codec_string = video.videoWidth*video.videoHeight *4 > 1920*1080  ? 'avc1.42003e': 'avc1.42001f';
+
+ //   let codec_string = config.codec;
+
+    console.log("Config", codec_string)
 
     const videoEncoderConfig = {
         codec: codec_string,
@@ -646,6 +651,8 @@ async function initRecording(){
 
         const bitmap = await createImageBitmap(upscaled_canvas);
 
+        console.log(frame.timestamp)
+
         const new_frame = new VideoFrame(bitmap,{ timestamp: frame.timestamp});
 
         let progress  = Math.floor((frame.timestamp/(1000*1000))/video.duration*100);
@@ -674,7 +681,7 @@ async function initRecording(){
 
         
         try{
-            encoder.encode(new_frame, {keyFrame: source_chunk.type === 'key'});
+            encoder.encode(new_frame, {keyFrame: i%60 === 0});
         } catch (e) {
             showError(e.message);
             Sentry.captureException(e);
@@ -682,12 +689,12 @@ async function initRecording(){
 
 
 
-        frame.close();
-        new_frame.close();
+      //  frame.close();
+       // new_frame.close();
 
-        bitmap1.close();
-        bitmap2.close();
-        bitmap.close();
+       // bitmap1.close();
+        //bitmap2.close();
+        //bitmap.close();
 
 
         if( i +decoder_buffer_length < encoded_chunks.length){
