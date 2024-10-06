@@ -10,7 +10,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css";
 import "./lib/image-compare-viewer.min.css"
 
-
+let uctx;
 
 let upscaled_canvas;
 let original_canvas;
@@ -107,15 +107,8 @@ async function index() {
     ctx = original_canvas.getContext('bitmaprenderer');
     if(!"VideoEncoder" in window) return showUnsupported("WebCodecs");
 
-    try{
-        gpu = await WebSR.initWebGPU();
-    } catch (e) {
-        Sentry.captureException(e);
-    }
 
 
-
-    if(!gpu) return showUnsupported("WebGPU");
 
     window.chooseFile =  chooseFile;
 
@@ -178,14 +171,7 @@ function loadVideo(input){
     gtag('event', 'load_video', {});
 }
 
-async function updateNetwork(){
-    
-    websr.switchNetwork(networks[size].name, weights[size][content]);
 
-    const bitmap = await createImageBitmap(video);
-    await websr.render(bitmap);
-
-}
 
 async function setupPreview(data) {
 
@@ -213,7 +199,7 @@ async function setupPreview(data) {
         upscaled_canvas.height = video.videoHeight*2;
         original_canvas.width = video.videoWidth;
         original_canvas.height = video.videoHeight;
-        new ImageCompare(imageCompare).mount();
+   //     new ImageCompare(imageCompare).mount();
         video.currentTime = video.duration * 0.2 || 0;
         if(video.requestVideoFrameCallback)  video.requestVideoFrameCallback(showPreview);
         else requestAnimationFrame(showPreview);
@@ -229,20 +215,11 @@ async function setupPreview(data) {
 
         const fullScreenButton = document.getElementById('full-screen');
 
-        websr = new WebSR({
-            source: video,
-            network_name: "anime4k/cnn-2x-m",
-            weights:weights[size][content],
-            gpu: gpu,
-            canvas: upscaled_canvas
-        });
+
 
         const bitmap = await createImageBitmap(video);
 
 
-
-
-        await websr.render(bitmap);
         window.initRecording = initRecording;
         window.fullScreenPreview = fullScreenPreview;
 
@@ -323,19 +300,6 @@ async function setupPreview(data) {
 
 
 
-
-        if(detected){
-            content = detected;
-            await updateNetwork();
-            Alpine.store('style', content);
-        } else {
-            // Just a guess
-            // I tried training a 3 class network, but it was producing really innacurate results compared to just real life vs 2d animation
-            // Decided I'd rather do a good job on 2d animations and real life, and then show a menu if it's maybe something else or we don't know
-            content = '3d';
-            await updateNetwork();
-            Alpine.store('style', 'unknown');
-        }
 
 
 
@@ -425,15 +389,12 @@ async function setupPreview(data) {
             if(el.value !== size){
                 size = el.value;
 
-                await updateNetwork();
             }
         }
 
         window.switchNetworkStyle = async function(el){
             if(el.value !== content){
                 content = el.value;
-
-                await updateNetwork();
 
             }
         }
@@ -449,334 +410,8 @@ async function setupPreview(data) {
 
 async function initRecording(){
 
-    gtag('event', 'start', {});
-
-    Alpine.store('state', 'loading');
-
-    let bitrate = getBitrate();
-    const estimated_size = (bitrate/8)*video.duration + (128/8)*video.duration; // Assume 128 kbps audio
-
-    let writer;
-
-    // Max Blob size - 100 MB
-    if(estimated_size > 100*1024*1024){
-        try{
-            writer = await showFilePicker();
-        } catch (e) {
-            console.warn("User aborted request");
-            return Alpine.store('state', 'preview');
-        }
-
-
-
-    }
-
-
-    Alpine.store('progress', 0);
-    Alpine.store('state', 'processing');
-
-    let videoData;
-
-    let audioData;
-
-
-    try {
-        audioData = await getMP4Data(data, 'audio');
-
-    } catch (e) {
-        console.log('No audio track found, skipping....');
-
-    }
-
-
-    console.log("Audio data", audioData);
-
-    try{
-        videoData = await getMP4Data(data, 'video');
-    } catch (e) {
-        console.warn('No video data found');
-
-    }
-
-    if(!videoData) return showError(`There was an error loading the video track. Is there something wrong with the video file?`);
-
-    const config = videoData.config;
-    const encoded_chunks = videoData.encoded_chunks;
-
-
-    const target = writer ? new FileSystemWritableFileStreamTarget(writer) : new ArrayBufferTarget();
-
-    console.log(videoData.config)
-
-    const muxerOptions =
-        {
-            target: target,
-            video: {
-                codec: 'avc',
-                width: video.videoWidth*2,
-                height: video.videoHeight*2
-            },
-            firstTimestampBehavior: 'offset',
-            fastStart: writer ? false: 'in-memory'
-        };
-
-    if(audioData){
-        muxerOptions.audio = {
-
-            codec:  'aac',
-            numberOfChannels: audioData.config.numberOfChannels,
-            sampleRate: audioData.config.sampleRate
-
-        }
-    }
-
-
-    const muxer = new Muxer(muxerOptions);
-
-
-  let codec_string = video.videoWidth*video.videoHeight *4 > 1920*1080  ? 'avc1.42003e': 'avc1.42001f';
-
- //   let codec_string = config.codec;
-
-    console.log("Config", codec_string)
-
-    const videoEncoderConfig = {
-        codec: codec_string,
-        width: video.videoWidth*2,
-        height: video.videoHeight*2,
-        bitrate: bitrate,
-        framerate: 30,
-    };
-
-    if(!(await VideoEncoder.isConfigSupported(videoEncoderConfig)).supported) return showUnsupported(`Video codec: ${codec_string}`);
-
-    const decode_callbacks = [];
-
-    // Set up a VideoDecoer.
-    const decoder = new VideoDecoder({
-        output(frame) {
-
-            const callback = decode_callbacks.shift();
-            callback(frame);
-        },
-        error(e) {
-            showError(e.message);
-            Sentry.captureException(e);
-        }
-    });
-
-
-    const encode_callbacks = [];
-
-    const encoder = new VideoEncoder({
-        output: (chunk, meta) => {
-            const callback = encode_callbacks.shift();
-
-            try {
-                muxer.addVideoChunk(chunk, meta);
-            } catch (e) {
-                showError(e.message);
-                Sentry.captureException(e);
-            }
-
-
-            callback();
-        },
-        error: (e) => {
-            showError(e.message);
-            Sentry.captureException(e);
-        }
-    });
-
-
-    encoder.configure(videoEncoderConfig);
-
-    decoder.configure(config);
-
-
-    const decode_promises = [];
-
-    const decoder_buffer_length =1000;
-
-    for (let i = 0; i < Math.min(encoded_chunks.length, decoder_buffer_length); i ++){
-
-        let chunk = encoded_chunks[i];
-
-        decode_promises.push(new Promise(function (resolve, reject) {
-            const callback = function (frame){ resolve(frame);}
-            decode_callbacks.push(callback);
-        }));
-
-        try{
-            decoder.decode(chunk);
-        } catch (e) {
-            showError(e.message);
-            Sentry.captureException(e);
-        }
-
-    }
-    
-    const encode_promises = [];
-
-    const start_time = performance.now();
-
-    let last_decode = performance.now();
-
-    let flush_check = setInterval(function () {
-
-        if(performance.now() - last_decode > 1000 && (encoded_chunks.length - current_frame < 10)) decoder.flush()
-
-    }, 100);
-
-    let current_frame;
-
-    for (let i =0; i < decode_promises.length; i++){
-
-        const decode_promise = decode_promises[i];
-        const source_chunk = encoded_chunks[i];
-
-        const frame = await decode_promise;
-        last_decode = performance.now();
-
-
-        const bitmap1 = await createImageBitmap(frame);
-        const bitmap2 = await createImageBitmap(frame);
-
-
-        let render_promise = websr.render(bitmap1);
-        ctx.transferFromImageBitmap(bitmap2);
-        await render_promise;
-
-        current_frame = i;
-
-        const bitmap = await createImageBitmap(upscaled_canvas);
-
-        console.log(frame.timestamp)
-
-        const new_frame = new VideoFrame(bitmap,{ timestamp: frame.timestamp});
-
-        let progress  = Math.floor((frame.timestamp/(1000*1000))/video.duration*100);
-
-
-        let time_elapsed = performance.now() - start_time;
-
-        if(time_elapsed > 1000){
-            const processing_rate = ((frame.timestamp/(1000*1000))/video.duration*100)/time_elapsed;
-            let eta = Math.round(((100-progress)/processing_rate)/1000);
-            Alpine.store('eta', prettyTime(eta))
-        } else {
-            Alpine.store('eta', 'calculating...')
-        }
-
-
-
-        Alpine.store('progress', progress);
-
-
-        encode_promises.push(new Promise(function (resolve, reject) {
-            const callback = function (){ resolve();}
-            encode_callbacks.push(callback);
-        }));
-
-
-        
-        try{
-            encoder.encode(new_frame, {keyFrame: i%60 === 0});
-        } catch (e) {
-            showError(e.message);
-            Sentry.captureException(e);
-        }
-
-
-
-      //  frame.close();
-       // new_frame.close();
-
-       // bitmap1.close();
-        //bitmap2.close();
-        //bitmap.close();
-
-
-        if( i +decoder_buffer_length < encoded_chunks.length){
-
-            let chunk = encoded_chunks[i+decoder_buffer_length];
-
-            decode_promises.push(new Promise(function (resolve, reject) {
-                const callback = function (frame){ resolve(frame);}
-                decode_callbacks.push(callback);
-            }));
-
-            try{
-                decoder.decode(chunk);
-            } catch (e) {
-                showError(e.message);
-                Sentry.captureException(e);
-            }
-
-
-            last_decode = performance.now();
-        }
-
-    }
-
-    clearInterval(flush_check);
-
-    let last_encode = performance.now();
-
-    flush_check = setInterval(function () {
-
-        if(performance.now() - last_encode > 1000) encoder.flush()
-
-    }, 100);
-
-
-    for (let i =0; i < encode_promises.length; i++){
-
-        const encode_promise = encode_promises[i];
-        await encode_promise;
-        last_encode = performance.now();
-
-    }
-
-    clearInterval(flush_check);
-
-
-    try{
-
-        if(audioData) {
-
-            const source_audio_chunks = audioData.encoded_chunks;
-
-            for (let audio_chunk of source_audio_chunks){
-                muxer.addAudioChunk(audio_chunk);
-            }
-
-        }
-
-        Alpine.store('progress', 100);
-
-        muxer.finalize();
-
-        if(writer){
-            await writer.close();
-        } else{
-            const blob = new Blob([muxer.target.buffer], {type: "video/mp4"});
-            Alpine.store('download_url', window.URL.createObjectURL(blob));
-        }
-
-        Alpine.store('state', 'complete');
-
-        gtag('event', 'finish', {});
-
-    } catch (e) {
-
-        showError(e.message);
-        Sentry.captureException(e);
-
-    }
-
-
-
+    console.log("Data");
+    console.log(data)
 
 
 }
@@ -844,37 +479,6 @@ async function showFilePicker(){
 }
 
 
-function getMP4Data(data, type) {
-
-    return new Promise(function (resolve, reject) {
-
-        let configToReturn;
-        let dataToReturn =[];
-        let lastChunk = false;
-
-        const demuxer = new MP4Demuxer(data, type, {
-            onConfig(config) {
-                configToReturn = config;
-                if(configToReturn && lastChunk) return resolve({config: configToReturn, encoded_chunks: dataToReturn});
-            },
-            onData(chunks) {
-
-                for(let chunk of chunks){
-                    dataToReturn.push(chunk);
-                }
-
-                let last_time = chunks[chunks.length-1].timestamp/(1000*1000);
-
-                if(Math.abs(video.duration - last_time) < 1) lastChunk = true;
-
-                if(configToReturn && lastChunk) return resolve({config: configToReturn, encoded_chunks: dataToReturn});
-            },
-            setStatus: function (){}
-        });
-    });
-
-
-}
 
 
 
