@@ -432,6 +432,8 @@ worker.onmessage = function (event) {
 
     } else if(event.data.cmd === 'error'){
 
+        showError(event.data.data);
+
     } else if(event.data.cmd === 'eta'){
 
         Alpine.store('eta', event.data.data)

@@ -173,8 +173,8 @@ async function initRecording( data, duration){
 
     const videoEncoderConfig = {
         codec: 'avc1.42001f',
-        width: 400,
-        height: 400,
+        width: resolution.width*2,
+        height: resolution.height*2,
         bitrate: Math.round(bitrate),
         framerate: 30,
     };
@@ -279,18 +279,19 @@ async function initRecording( data, duration){
         last_decode = performance.now();
 
 
+        const bitmap2 = await createImageBitmap(frame);
 
         let render_promise = websr.render(frame);
-
-
-        const bitmap = await createImageBitmap(frame);
-        ctx.transferFromImageBitmap(bitmap)
+        ctx.transferFromImageBitmap(bitmap2);
+        await render_promise;
 
         await websr.context.device.queue.onSubmittedWorkDone();
 
+        await new Promise(function (resolve) {
+            setTimeout(resolve, 10)
+        })
 
         current_frame = i;
-
 
         const new_frame = new VideoFrame(upscaled_canvas,{ timestamp: frame.timestamp, duration: frame.duration, alpha: "discard"});
 
@@ -314,11 +315,6 @@ async function initRecording( data, duration){
 
 
 
-
-
-
-
-
         encode_promises.push(new Promise(function (resolve, reject) {
             const callback = function (){ resolve();}
             encode_callbacks.push(callback);
@@ -329,7 +325,7 @@ async function initRecording( data, duration){
         try{
 
 
-            encoder.encode(new_frame, {keyFrame: i%60 === 0});
+            encoder.encode(new_frame, {keyFrame: source_chunk.type === 'key'});
 
         } catch (e) {
 
@@ -339,7 +335,6 @@ async function initRecording( data, duration){
 
         frame.close();
         new_frame.close();
-        bitmap.close()
 
 
         if( i +decoder_buffer_length < encoded_chunks.length){
