@@ -310,6 +310,20 @@ async function setupPreview(data) {
 
 
 
+        if(detected){
+            content = detected;
+            await updateNetwork();
+            Alpine.store('style', content);
+        } else {
+            // Just a guess
+            // I tried training a 3 class network, but it was producing really innacurate results compared to just real life vs 2d animation
+            // Decided I'd rather do a good job on 2d animations and real life, and then show a menu if it's maybe something else or we don't know
+            content = '3d';
+            await updateNetwork();
+            Alpine.store('style', 'unknown');
+        }
+
+
 
 
 
@@ -401,6 +415,7 @@ async function setupPreview(data) {
             if(el.value !== size){
                 size = el.value;
 
+                await updateNetwork();
             }
         }
 
@@ -408,6 +423,7 @@ async function setupPreview(data) {
             if(el.value !== content){
                 content = el.value;
 
+                await updateNetwork();
             }
         }
 
@@ -448,6 +464,22 @@ worker.onmessage = function (event) {
 }
 
 
+async function updateNetwork(){
+
+    console.log("Switching network")
+
+    const bitmap = await createImageBitmap(video)
+
+    worker.postMessage({cmd: 'network', data: {
+        name: networks[size].name,
+            bitmap,
+            weights:weights[size][content]
+        }})
+
+
+}
+
+
 //===================  Process ===========================
 
 async function initRecording(){
@@ -455,7 +487,25 @@ async function initRecording(){
 
     Alpine.store('state', 'loading');
 
-    worker.postMessage({cmd: "process", data, duration: video.duration}, [data]);
+
+    let bitrate = getBitrate();
+    const estimated_size = (bitrate/8)*video.duration + (128/8)*video.duration; // Assume 128 kbps audio
+
+    let handle;
+
+    // Max Blob size - 100 MB
+    if(estimated_size > 100*1024*1024){
+        try{
+            handle = await showFilePicker();
+        } catch (e) {
+            console.warn("User aborted request");
+            return Alpine.store('state', 'preview');
+        }
+
+    }
+
+
+    worker.postMessage({cmd: "process", data, duration: video.duration, handle}, [data]);
 
 
 }
@@ -519,7 +569,7 @@ async function showFilePicker(){
     });
 
 
-    return  await handle.createWritable();
+    return  handle
 }
 
 

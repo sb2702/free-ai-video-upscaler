@@ -98,15 +98,28 @@ self.onmessage = async function (event){
     } else if(event.data.cmd === 'isSupported'){
         await isSupported();
     } else if (event.data.cmd === 'process'){
-        await initRecording(event.data.data, event.data.duration)
+        await initRecording(event.data.data, event.data.duration, event.data.handle)
+    }  else if(event.data.cmd === 'network'){
+        await switchNetwork(event.data.data.name, event.data.data.weights, event.data.data.bitmap)
     }
 
 
 
 }
 
+async function switchNetwork(name, weights, bitmap){
 
-async function initRecording( data, duration){
+    console.log("Switching network");
+    console.log(name, weights, bitmap)
+    websr.switchNetwork(name, weights);
+
+
+    await websr.render(bitmap);
+
+}
+
+
+async function initRecording( data, duration, handle){
 
 
 
@@ -114,6 +127,12 @@ async function initRecording( data, duration){
 
     let videoData;
     let audioData;
+    let writer;
+
+
+    if(handle){
+        writer = await handle.createWritable();
+    }
 
 
     try {
@@ -138,7 +157,7 @@ async function initRecording( data, duration){
     const encoded_chunks = videoData.encoded_chunks;
 
 
-    const target = new ArrayBufferTarget();
+    const target = writer ? new FileSystemWritableFileStreamTarget(writer) : new ArrayBufferTarget();
 
 
     const muxerOptions =
@@ -167,17 +186,18 @@ async function initRecording( data, duration){
     const muxer = new Muxer(muxerOptions);
 
 
-    let codec_string = 'avc1.42001f';
+    let codec_string = resolution.width*resolution.height *4 > 921600 ? 'avc1.42003e': 'avc1.42001f';
 
-    //   let codec_string = config.codec;
+    console.log(videoData)
+
 
 
     const videoEncoderConfig = {
-        codec: 'avc1.42001f',
+        codec: codec_string,
         width: resolution.width*2,
         height: resolution.height*2,
         bitrate: Math.round(bitrate),
-        framerate: 30,
+        framerate: 1e6/videoData.encoded_chunks[0].duration,
     };
 
 
@@ -293,8 +313,13 @@ async function initRecording( data, duration){
 
         await websr.context.device.queue.onSubmittedWorkDone();
 
+
+
+
+        let time_since = performance.now() - last_decode;
+
         await new Promise(function (resolve) {
-            setTimeout(resolve, 10)
+            setTimeout(resolve, Math.max(0, time_since - 30))
         })
 
         current_frame = i;
@@ -309,7 +334,7 @@ async function initRecording( data, duration){
             const processing_rate = ((frame.timestamp/(1000*1000))/duration*100)/time_elapsed;
             let eta = Math.round(((100-progress)/processing_rate)/1000);
 
-            postMessage({cmd: 'eta', data: eta})
+            postMessage({cmd: 'eta', data: prettyTime(eta)})
 
 
         } else {
@@ -406,6 +431,8 @@ async function initRecording( data, duration){
 
         if(writer){
             await writer.close();
+
+            postMessage({cmd: 'finished', data: null}, []);
         } else{
 
             postMessage({cmd: 'finished', data: muxer.target.buffer}, [muxer.target.buffer]);
@@ -430,6 +457,8 @@ async function initRecording( data, duration){
 
 
 }
+
+
 
 
 
