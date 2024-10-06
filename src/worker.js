@@ -131,6 +131,7 @@ async function initRecording( data, duration){
         videoData = await getMP4Data(data, 'video', duration);
     } catch (e) {
         console.warn('No video data found');
+        postMessage({cmd: 'error', data: 'No video found'});
 
     }
     const config = videoData.config;
@@ -196,6 +197,8 @@ async function initRecording( data, duration){
             console.log("Decoder error");
             console.log(e);
 
+            postMessage({cmd: 'error', data: e.message});
+
         }
     });
 
@@ -211,9 +214,9 @@ async function initRecording( data, duration){
             } catch (e) {
 
 
-                console.log("Encoder error");
+                console.log("Muxing error");
                 console.log(e);
-
+                postMessage({cmd: 'error', data: e.message});
             }
 
 
@@ -223,6 +226,7 @@ async function initRecording( data, duration){
 
             console.log("Encoder error");
             console.log(e);
+            postMessage({cmd: 'error', data: e.message});
 
         }
     });
@@ -250,8 +254,10 @@ async function initRecording( data, duration){
             decoder.decode(chunk);
         } catch (e) {
 
-            console.log("Error");
+            console.log("Decoder Error");
             console.log(e);
+
+            postMessage({cmd: 'error', data: e.message});
         }
 
     }
@@ -330,6 +336,9 @@ async function initRecording( data, duration){
         } catch (e) {
 
 
+            console.log("Encoding error");
+            console.log(e);
+            postMessage({cmd: 'error', data: e.message});
         }
 
 
@@ -411,6 +420,8 @@ async function initRecording( data, duration){
 
         console.log("Err finishing");
         console.log(e);
+
+        postMessage({cmd: 'error', data: e.message});
 
     }
 
