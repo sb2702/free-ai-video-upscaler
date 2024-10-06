@@ -100,10 +100,10 @@ I built it because from previous experience as a casual user who just wants to u
 
 <div id="start-panel" class="panel" x-show="$store.state === 'preview' || $store.state === 'processing' || $store.state === 'complete'">
 
-    <canvas id="upscaled" ></canvas>
-    <canvas id="original"></canvas>
 
-    <div id="image-compare">
+    <div id="image-compare"  style="overflow: hidden">
+        <canvas id="original"></canvas>
+        <canvas id="upscaled" ></canvas>
 
 
     </div>

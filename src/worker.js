@@ -7,12 +7,15 @@ console.log("Worker")
 
 
 
+let gpu;
+let websr;
+let upscaled_canvas;
+let original_canvas;
+let resolution;
+let ctx;
+let writer;
 
-
-
-
-
-function getMP4Data(data, type) {
+function getMP4Data(data, type, duration) {
 
     return new Promise(function (resolve, reject) {
 
@@ -33,7 +36,7 @@ function getMP4Data(data, type) {
 
                 let last_time = chunks[chunks.length-1].timestamp/(1000*1000);
 
-                if(Math.abs(20 - last_time) < 1) lastChunk = true;
+                if(Math.abs(duration - last_time) < 1) lastChunk = true;
 
                 if(configToReturn && lastChunk) return resolve({config: configToReturn, encoded_chunks: dataToReturn});
             },
@@ -48,54 +51,73 @@ function getMP4Data(data, type) {
 const weights =  require('./weights/cnn-2x-m-rl.json');
 
 
-self.onmessage = async function (event){
-    console.log("Got message");
-
-    console.log("Data", event.data);
-
-    if(!event.data.data) return;
+async function isSupported(){
+    gpu = await WebSR.initWebGPU();
+    postMessage({cmd: 'isSupported', data: typeof gpu !== 'undefined'});
+}
 
 
 
+async function init(config){
 
-    await initRecording(event.data.data)
+    if(!gpu)     gpu = await WebSR.initWebGPU();
+
+    websr = new WebSR({
+        network_name: "anime4k/cnn-2x-m",
+        weights,
+        resolution: config.resolution,
+        gpu: gpu,
+        canvas: config.upscaled
+    });
+
+    resolution = config.resolution;
+    upscaled_canvas = config.upscaled;
+    original_canvas = config.original;
+
+    ctx = original_canvas.getContext('bitmaprenderer');
+
+
+
+    const bitmap2 = await createImageBitmap(config.bitmap);
+    await websr.render(config.bitmap);
+
+    ctx.transferFromImageBitmap(bitmap2)
 
 
 }
 
 
-async function initRecording( data){
+self.onmessage = async function (event){
 
 
-    console.log("Starting");
-    const gpu = await WebSR.initWebGPU();
-
-    const upscaled_canvas = new OffscreenCanvas(400, 400);
+    if(!event.data.cmd) return;
 
 
-
-    const websr = new WebSR({
-        network_name: "anime4k/cnn-2x-m",
-        weights,
-        resolution: {
-            width: 200,
-            height: 200,
-        },
-        gpu: gpu,
-        canvas: upscaled_canvas
-    });
+    if(event.data.cmd === 'init'){
+        await init(event.data.data);
+    } else if(event.data.cmd === 'isSupported'){
+        await isSupported();
+    } else if (event.data.cmd === 'process'){
+        await initRecording(event.data.data, event.data.duration)
+    }
 
 
 
+}
 
-    let bitrate = 1e7;
+
+async function initRecording( data, duration){
+
+
+
+    let bitrate = 1e7 * (resolution.width*resolution.height*4)/(1280*720);
 
     let videoData;
     let audioData;
 
 
     try {
-        audioData = await getMP4Data(data, 'audio');
+        audioData = await getMP4Data(data, 'audio', duration);
 
     } catch (e) {
         console.log('No audio track found, skipping....');
@@ -106,7 +128,7 @@ async function initRecording( data){
     console.log("Audio data", audioData);
 
     try{
-        videoData = await getMP4Data(data, 'video');
+        videoData = await getMP4Data(data, 'video', duration);
     } catch (e) {
         console.warn('No video data found');
 
@@ -123,8 +145,8 @@ async function initRecording( data){
             target: target,
             video: {
                 codec: 'avc',
-                width: 400,
-                height: 400
+                width: resolution.width*2,
+                height: resolution.height*2
             },
             firstTimestampBehavior: 'offset',
             fastStart: 'in-memory'
@@ -185,7 +207,7 @@ async function initRecording( data){
             const callback = encode_callbacks.shift();
 
             try {
-                //    muxer.addVideoChunk(chunk, meta);
+                    muxer.addVideoChunk(chunk, meta);
             } catch (e) {
 
 
@@ -260,6 +282,10 @@ async function initRecording( data){
 
         let render_promise = websr.render(frame);
 
+
+        const bitmap = await createImageBitmap(frame);
+        ctx.transferFromImageBitmap(bitmap)
+
         await websr.context.device.queue.onSubmittedWorkDone();
 
 
@@ -268,11 +294,25 @@ async function initRecording( data){
 
         const new_frame = new VideoFrame(upscaled_canvas,{ timestamp: frame.timestamp, duration: frame.duration, alpha: "discard"});
 
-        console.log(new_frame)
-
-
+        let progress  = Math.floor((frame.timestamp/(1000*1000))/duration*100);
 
         let time_elapsed = performance.now() - start_time;
+
+        if(time_elapsed > 1000){
+            const processing_rate = ((frame.timestamp/(1000*1000))/duration*100)/time_elapsed;
+            let eta = Math.round(((100-progress)/processing_rate)/1000);
+
+            postMessage({cmd: 'eta', data: eta})
+
+
+        } else {
+            postMessage({cmd: 'eta', data: 'calculating...'})
+        }
+
+
+        postMessage({cmd: 'progress', data: progress})
+
+
 
 
 
@@ -287,24 +327,19 @@ async function initRecording( data){
 
 
         try{
-            console.log("Encode");
 
-            console.log(encoder)
 
             encoder.encode(new_frame, {keyFrame: i%60 === 0});
 
         } catch (e) {
 
-            console.log("This");
 
-            console.warn(e);
-
-            return
         }
 
 
         frame.close();
         new_frame.close();
+        bitmap.close()
 
 
         if( i +decoder_buffer_length < encoded_chunks.length){
@@ -333,7 +368,6 @@ async function initRecording( data){
 
     flush_check = setInterval(function () {
 
-        console.log("Flushing")
         if(performance.now() - last_encode > 1000) encoder.flush()
 
     }, 100);
@@ -365,7 +399,15 @@ async function initRecording( data){
 
         muxer.finalize();
 
-        console.log("Done")
+
+        if(writer){
+            await writer.close();
+        } else{
+
+            postMessage({cmd: 'finished', data: muxer.target.buffer}, [muxer.target.buffer]);
+        }
+
+
 
 
 
@@ -383,3 +425,16 @@ async function initRecording( data){
 
 }
 
+
+
+function prettyTime(secs){
+    var sec_num = parseInt(secs, 10)
+    var hours   = Math.floor(sec_num / 3600)
+    var minutes = Math.floor(sec_num / 60) % 60
+    var seconds = sec_num % 60
+
+    return [hours,minutes,seconds]
+        .map(v => v < 10 ? "0" + v : v)
+        .filter((v,i) => v !== "00" || i > 0)
+        .join(":")
+}

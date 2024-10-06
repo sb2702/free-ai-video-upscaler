@@ -10,7 +10,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css";
 import "./lib/image-compare-viewer.min.css"
 const worker = new Worker(new URL('./worker.js', import.meta.url));
-let uctx;
+
 
 let upscaled_canvas;
 let original_canvas;
@@ -104,7 +104,7 @@ async function index() {
 
     upscaled_canvas = document.getElementById("upscaled");
     original_canvas = document.getElementById('original');
-    ctx = original_canvas.getContext('bitmaprenderer');
+
     if(!"VideoEncoder" in window) return showUnsupported("WebCodecs");
 
 
@@ -199,7 +199,7 @@ async function setupPreview(data) {
         upscaled_canvas.height = video.videoHeight*2;
         original_canvas.width = video.videoWidth;
         original_canvas.height = video.videoHeight;
-   //     new ImageCompare(imageCompare).mount();
+        new ImageCompare(imageCompare).mount();
         video.currentTime = video.duration * 0.2 || 0;
         if(video.requestVideoFrameCallback)  video.requestVideoFrameCallback(showPreview);
         else requestAnimationFrame(showPreview);
@@ -216,14 +216,26 @@ async function setupPreview(data) {
         const fullScreenButton = document.getElementById('full-screen');
 
 
+        window.initRecording = initRecording;
+        window.fullScreenPreview = fullScreenPreview;
 
         const bitmap = await createImageBitmap(video);
 
 
-        window.initRecording = initRecording;
-        window.fullScreenPreview = fullScreenPreview;
+        const upscaled = upscaled_canvas.transferControlToOffscreen();
+        const original =    original_canvas.transferControlToOffscreen();
 
-        ctx.transferFromImageBitmap(await createImageBitmap(video));
+
+        worker.postMessage({cmd: "init", data: {
+                bitmap,
+                upscaled,
+                original,
+                resolution: {
+                    width: video.videoWidth,
+                    height: video.videoHeight
+                }
+
+            }}, [bitmap, upscaled, original]);
 
 
         video.style.height = '100%';
@@ -406,22 +418,42 @@ async function setupPreview(data) {
 }
 
 
+worker.onmessage = function (event) {
+
+    if(event.data.cmd === 'isSupported'){
+
+    } else if(event.data.cmd === 'progress'){
+        Alpine.store('progress', event.data.data);
+        Alpine.store('state', 'processing');
+
+
+
+    } else if (event.data.cmd === 'process'){
+
+    } else if(event.data.cmd === 'error'){
+
+    } else if(event.data.cmd === 'eta'){
+
+        Alpine.store('eta', event.data.data)
+
+    } else if(event.data.cmd === 'finished'){
+        Alpine.store('state', 'complete');
+        const blob = new Blob([event.data.data], {type: "video/mp4"});
+        Alpine.store('download_url', window.URL.createObjectURL(blob));
+    }
+
+
+}
+
+
 //===================  Process ===========================
 
 async function initRecording(){
 
 
+    Alpine.store('state', 'loading');
 
-    worker.onmessage = function(event) {
-        console.log('Received from worker:', event.data);
-    };
-
-    worker.onerror = function(event) {
-        console.error(event);
-    }
-
-
-    worker.postMessage({data}, [data]);
+    worker.postMessage({cmd: "process", data, duration: video.duration}, [data]);
 
 
 }
