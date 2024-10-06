@@ -1,7 +1,13 @@
-import Alpine from "alpinejs";
-import {ArrayBufferTarget, FileSystemWritableFileStreamTarget, Muxer} from "mp4-muxer";
+
 import {MP4Demuxer} from "./demuxer_mp4";
-import WebSR from "../../websr/src/main";
+import {ArrayBufferTarget, FileSystemWritableFileStreamTarget, Muxer} from "mp4-muxer";
+import WebSR from "../../websr/";
+console.log("Worker")
+
+
+
+
+
 
 
 
@@ -27,7 +33,7 @@ function getMP4Data(data, type) {
 
                 let last_time = chunks[chunks.length-1].timestamp/(1000*1000);
 
-                if(Math.abs(video.duration - last_time) < 1) lastChunk = true;
+                if(Math.abs(20 - last_time) < 1) lastChunk = true;
 
                 if(configToReturn && lastChunk) return resolve({config: configToReturn, encoded_chunks: dataToReturn});
             },
@@ -41,8 +47,27 @@ function getMP4Data(data, type) {
 
 const weights =  require('./weights/cnn-2x-m-rl.json');
 
+
+self.onmessage = async function (event){
+    console.log("Got message");
+
+    console.log("Data", event.data);
+
+    if(!event.data.data) return;
+
+
+
+
+    await initRecording(event.data.data)
+
+
+}
+
+
 async function initRecording( data){
 
+
+    console.log("Starting");
     const gpu = await WebSR.initWebGPU();
 
     const upscaled_canvas = new OffscreenCanvas(400, 400);
@@ -245,18 +270,11 @@ async function initRecording( data){
 
         console.log(new_frame)
 
-        let progress  = Math.floor((frame.timestamp/(1000*1000))/video.duration*100);
 
 
         let time_elapsed = performance.now() - start_time;
 
-        if(time_elapsed > 1000){
-            const processing_rate = ((frame.timestamp/(1000*1000))/video.duration*100)/time_elapsed;
-            let eta = Math.round(((100-progress)/processing_rate)/1000);
 
-        } else {
-
-        }
 
 
 
@@ -284,10 +302,9 @@ async function initRecording( data){
             return
         }
 
-        await new Promise(function (resolve) {
-            setTimeout(resolve, 100000)
-        })
 
+        frame.close();
+        new_frame.close();
 
 
         if( i +decoder_buffer_length < encoded_chunks.length){
@@ -365,3 +382,4 @@ async function initRecording( data){
 
 
 }
+

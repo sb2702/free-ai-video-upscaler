@@ -9,7 +9,7 @@ import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css";
 import "./lib/image-compare-viewer.min.css"
-
+const worker = new Worker(new URL('./worker.js', import.meta.url));
 let uctx;
 
 let upscaled_canvas;
@@ -410,8 +410,18 @@ async function setupPreview(data) {
 
 async function initRecording(){
 
-    console.log("Data");
-    console.log(data)
+
+
+    worker.onmessage = function(event) {
+        console.log('Received from worker:', event.data);
+    };
+
+    worker.onerror = function(event) {
+        console.error(event);
+    }
+
+
+    worker.postMessage({data}, [data]);
 
 
 }

@@ -7,7 +7,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 
 module.exports = {
-    entry: [ "./src/index.js"],
+    entry: [ "./src/index.js", './src/worker.js'],
     output: {
         libraryExport: "default",
         path: path.resolve(__dirname, './dist'),
@@ -44,6 +44,7 @@ module.exports = {
         }),
         new CopyWebpackPlugin( {
             patterns: [
+                { from: "src/*.js", to: path.basename('[name].js') },
                 { from: "src/img/*.svg", to: path.basename('[name].svg') },
                 { from: "src/img/*.png", to: path.basename('[name].png') },
                 { from: "src/tflite/**", to: path.basename('[name][ext]') },
