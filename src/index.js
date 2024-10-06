@@ -107,6 +107,8 @@ async function index() {
 
     if(!"VideoEncoder" in window) return showUnsupported("WebCodecs");
 
+    if(! window.showSaveFilePicker) return showUnsupported("File Write System API")
+
 
 
     worker.postMessage({cmd: 'isSupported'})
@@ -199,8 +201,16 @@ async function setupPreview(data) {
         Alpine.store('height', video.videoHeight);
         upscaled_canvas.width = video.videoWidth*2;
         upscaled_canvas.height = video.videoHeight*2;
-        original_canvas.width = video.videoWidth;
-        original_canvas.height = video.videoHeight;
+        original_canvas.width = video.videoWidth*2;
+        original_canvas.height = video.videoHeight*2;
+
+
+        imageCompare.style.height = '318px';
+        imageCompare.style.width =  `${Math.round(video.videoWidth/video.videoHeight*318)}px`
+        imageCompare.style.margin = 'auto';
+        imageCompare.style.position = 'relative';
+
+
         new ImageCompare(imageCompare).mount();
         video.currentTime = video.duration * 0.2 || 0;
         if(video.requestVideoFrameCallback)  video.requestVideoFrameCallback(showPreview);
@@ -240,7 +250,7 @@ async function setupPreview(data) {
             }}, [bitmap, upscaled, original]);
 
 
-        video.style.height = '100%';
+      //  video.style.height = '100%';
 
         const contentDetectionCanvas = document.createElement('canvas');
         contentDetectionCanvas.width = 224;
@@ -443,8 +453,6 @@ worker.onmessage = function (event) {
 
         const supported = event.data.data;
 
-        console.log("Is supported?");
-        console.log(supported);
 
         if(!supported) return showUnsupported("WebGPU");
 
@@ -477,7 +485,6 @@ worker.onmessage = function (event) {
 
 async function updateNetwork(){
 
-    console.log("Switching network")
 
     const bitmap = await createImageBitmap(video)
 

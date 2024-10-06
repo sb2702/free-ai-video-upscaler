@@ -17,11 +17,18 @@ let writer;
 
 function getMP4Data(data, type, duration) {
 
+    console.log("Fetching chunks");
+
     return new Promise(function (resolve, reject) {
 
         let configToReturn;
         let dataToReturn =[];
         let lastChunk = false;
+
+
+
+
+
 
         const demuxer = new MP4Demuxer(data, type, {
             onConfig(config) {
@@ -36,12 +43,23 @@ function getMP4Data(data, type, duration) {
 
                 let last_time = chunks[chunks.length-1].timestamp/(1000*1000);
 
+                console.log(Math.abs(duration - last_time))
+
+                console.log(last_time);
+                console.log(duration)
+
+
                 if(Math.abs(duration - last_time) < 1) lastChunk = true;
 
                 if(configToReturn && lastChunk) return resolve({config: configToReturn, encoded_chunks: dataToReturn});
             },
             setStatus: function (){}
         });
+
+        setTimeout(function () {
+            console.log("Flushing")
+            demuxer.flush();
+        }, 5000)
     });
 
 
@@ -76,11 +94,16 @@ async function init(config){
     upscaled_canvas = config.upscaled;
     original_canvas = config.original;
 
+    console.log(config.bitmap)
+
     ctx = original_canvas.getContext('bitmaprenderer');
 
 
 
-    const bitmap2 = await createImageBitmap(config.bitmap);
+    const bitmap2 = await createImageBitmap(config.bitmap, {
+        resizeHeight: config.resolution.height*2,
+        resizeWidth: config.resolution.width*2,
+    });
     await websr.render(config.bitmap);
 
     ctx.transferFromImageBitmap(bitmap2)
@@ -149,12 +172,15 @@ async function initRecording( data, duration, handle){
     console.log("Audio data", audioData);
 
     try{
+        console.log("Truing to send data");
         videoData = await getMP4Data(data, 'video', duration);
     } catch (e) {
         console.warn('No video data found');
         postMessage({cmd: 'error', data: 'No video found'});
 
     }
+
+    console.log("Video data")
     const config = videoData.config;
     const encoded_chunks = videoData.encoded_chunks;
 
@@ -307,7 +333,11 @@ async function initRecording( data, duration, handle){
         last_decode = performance.now();
 
 
-        const bitmap2 = await createImageBitmap(frame);
+        const bitmap2 = await createImageBitmap(frame,
+            {
+                resizeHeight: resolution.height*2,
+                resizeWidth: resolution.width*2,});
+
 
         let render_promise = websr.render(frame);
         ctx.transferFromImageBitmap(bitmap2);

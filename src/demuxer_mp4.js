@@ -90,6 +90,11 @@ class MP4Demuxer {
 
     this.onData(chunks);
   }
+
+  flush(){
+    
+    this.file.flush();
+  }
 }
 
 export {
