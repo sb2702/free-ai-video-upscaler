@@ -109,6 +109,8 @@ async function index() {
 
 
 
+    worker.postMessage({cmd: 'isSupported'})
+
 
     window.chooseFile =  chooseFile;
 
@@ -437,6 +439,15 @@ async function setupPreview(data) {
 worker.onmessage = function (event) {
 
     if(event.data.cmd === 'isSupported'){
+
+
+        const supported = event.data.data;
+
+        console.log("Is supported?");
+        console.log(supported);
+
+        if(!supported) return showUnsupported("WebGPU");
+
 
     } else if(event.data.cmd === 'progress'){
         Alpine.store('progress', event.data.data);

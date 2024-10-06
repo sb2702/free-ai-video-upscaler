@@ -53,7 +53,9 @@ const weights =  require('./weights/cnn-2x-m-rl.json');
 
 async function isSupported(){
     gpu = await WebSR.initWebGPU();
-    postMessage({cmd: 'isSupported', data: typeof gpu !== 'undefined'});
+
+    console.log(gpu)
+    postMessage({cmd: 'isSupported', data: gpu !== false});
 }
 
 
