@@ -319,7 +319,7 @@ async function initRecording( data, duration, handle){
         let time_since = performance.now() - last_decode;
 
         await new Promise(function (resolve) {
-            setTimeout(resolve, Math.max(0, time_since - 30))
+            setTimeout(resolve, Math.max(0, 30-time_since))
         })
 
         current_frame = i;
