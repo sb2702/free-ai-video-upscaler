@@ -2,9 +2,6 @@
 import {MP4Demuxer} from "./demuxer_mp4";
 import {ArrayBufferTarget, FileSystemWritableFileStreamTarget, Muxer} from "mp4-muxer";
 import WebSR from "../../websr/";
-console.log("Worker")
-
-
 
 
 let gpu;
@@ -13,7 +10,9 @@ let upscaled_canvas;
 let original_canvas;
 let resolution;
 let ctx;
-let writer;
+
+
+
 
 function getMP4Data(data, type, duration) {
 
@@ -43,11 +42,6 @@ function getMP4Data(data, type, duration) {
 
                 let last_time = chunks[chunks.length-1].timestamp/(1000*1000);
 
-                console.log(Math.abs(duration - last_time))
-
-                console.log(last_time);
-                console.log(duration)
-
 
                 if(Math.abs(duration - last_time) < 1) lastChunk = true;
 
@@ -56,10 +50,7 @@ function getMP4Data(data, type, duration) {
             setStatus: function (){}
         });
 
-        setTimeout(function () {
-            console.log("Flushing")
-            demuxer.flush();
-        }, 5000)
+
     });
 
 
@@ -72,7 +63,6 @@ const weights =  require('./weights/cnn-2x-m-rl.json');
 async function isSupported(){
     gpu = await WebSR.initWebGPU();
 
-    console.log(gpu)
     postMessage({cmd: 'isSupported', data: gpu !== false});
 }
 
@@ -94,7 +84,6 @@ async function init(config){
     upscaled_canvas = config.upscaled;
     original_canvas = config.original;
 
-    console.log(config.bitmap)
 
     ctx = original_canvas.getContext('bitmaprenderer');
 
@@ -134,8 +123,7 @@ self.onmessage = async function (event){
 
 async function switchNetwork(name, weights, bitmap){
 
-    console.log("Switching network");
-    console.log(name, weights, bitmap)
+
     websr.switchNetwork(name, weights);
 
 
@@ -215,8 +203,6 @@ async function initRecording( data, duration, handle){
 
 
     let codec_string = resolution.width*resolution.height *4 > 921600 ? 'avc1.42003e': 'avc1.42001f';
-
-    console.log(videoData)
 
 
 
@@ -382,6 +368,7 @@ async function initRecording( data, duration, handle){
             const callback = function (){ resolve();}
             encode_callbacks.push(callback);
         }));
+
 
 
 

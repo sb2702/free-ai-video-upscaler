@@ -92,7 +92,7 @@ class MP4Demuxer {
   }
 
   flush(){
-    
+
     this.file.flush();
   }
 }

@@ -10,6 +10,28 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css";
 import "./lib/image-compare-viewer.min.css"
 const worker = new Worker(new URL('./worker.js', import.meta.url));
+const progressVideo = document.createElement('video');
+const progressCanvas = document.createElement('canvas');
+const progressCtx = progressCanvas.getContext('2d');
+
+let eta = '';
+
+progressVideo.width  = progressCanvas.width;
+progressVideo.height =progressCanvas.height;
+progressVideo.autoplay = true;
+progressVideo.muted  = true;
+progressVideo.style.width = '300px';
+progressVideo.style.height = '150px';
+progressVideo.style.position = 'fixed';
+progressVideo.style.top = '0px';
+progressVideo.style.left = '0px';
+progressVideo.style.visibility = 'hidden';
+
+
+progressCanvas.style.visibility = 'hidden';
+progressCanvas.id = "progress-canvas";
+document.body.appendChild(progressCanvas);
+document.body.appendChild(progressVideo)
 
 
 let upscaled_canvas;
@@ -462,6 +484,8 @@ worker.onmessage = function (event) {
         Alpine.store('state', 'processing');
 
 
+        progressView(event.data.data)
+
 
     } else if (event.data.cmd === 'process'){
 
@@ -472,6 +496,7 @@ worker.onmessage = function (event) {
     } else if(event.data.cmd === 'eta'){
 
         Alpine.store('eta', event.data.data)
+        eta = event.data.data;
 
     } else if(event.data.cmd === 'finished'){
         Alpine.store('state', 'complete');
@@ -482,6 +507,44 @@ worker.onmessage = function (event) {
 
 }
 
+
+function progressView(progress){
+
+
+    const w = progressCanvas.width;
+    const h   =progressCanvas.height;
+
+    progressCtx.clearRect(0, 0, w, h);
+
+    progressCtx.fillStyle = "white";
+    progressCtx.fillRect(0, 0, w, h);
+
+    progressCtx.fillStyle = "#bfdbfe";
+    progressCtx.fillRect(0, 0, Math.round(w*progress/100), h);
+    progressCtx.font = "bold 32px Manrope";
+    progressCtx.textAlign = 'center';
+
+    progressCtx.fillStyle = "#232554";
+    progressCtx.fillText('Free AI Video Upscaler', w/2, 50);
+
+    progressCtx.font = "14px Manrope";
+    progressCtx.textAlign = 'center';
+
+    progressCtx.fillText(download_name, w/2, 80);
+
+    progressCtx.font = "bold 48px Manrope";
+    progressCtx.textAlign = 'center';
+
+    progressCtx.fillStyle = "#2563eb";
+    progressCtx.fillText(`${progress}%`, w/2, h/2+30);
+
+
+    progressCtx.font = "14px Manrope";
+    progressCtx.textAlign = 'center';
+    progressCtx.fillStyle = "#232554";
+    progressCtx.fillText(`Time remaining: ${eta}`, w/2, h/2 + 80);
+
+}
 
 async function updateNetwork(){
 
@@ -505,6 +568,20 @@ async function initRecording(){
 
     Alpine.store('state', 'loading');
 
+    const stream = progressCanvas.captureStream();
+    progressVideo.srcObject = stream;
+
+
+    progressVideo.onloadedmetadata= async function(){
+
+        console.log("Loaded data")
+        const pip = await progressVideo.requestPictureInPicture();
+
+        progressCanvas.width = pip.width;
+        progressCanvas.height = pip.height;
+    }
+
+
 
     let bitrate = getBitrate();
     const estimated_size = (bitrate/8)*video.duration + (128/8)*video.duration; // Assume 128 kbps audio
@@ -524,6 +601,12 @@ async function initRecording(){
 
 
     worker.postMessage({cmd: "process", data, duration: video.duration, handle}, [data]);
+
+
+
+
+
+
 
 
 }
