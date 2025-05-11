@@ -15,6 +15,7 @@ const progressCanvas = document.createElement('canvas');
 const progressCtx = progressCanvas.getContext('2d');
 
 let eta = '';
+let pip = null;
 
 progressVideo.width  = progressCanvas.width;
 progressVideo.height =progressCanvas.height;
@@ -494,6 +495,10 @@ worker.onmessage = function (event) {
 
         showError(event.data.data);
 
+        if(pip){
+            document.exitPictureInPicture();
+        }
+
     } else if(event.data.cmd === 'eta'){
 
         Alpine.store('eta', event.data.data)
@@ -503,6 +508,10 @@ worker.onmessage = function (event) {
         Alpine.store('state', 'complete');
         const blob = new Blob([event.data.data], {type: "video/mp4"});
         Alpine.store('download_url', window.URL.createObjectURL(blob));
+
+        if(pip){
+            document.exitPictureInPicture();
+        }
     }
 
 
@@ -576,7 +585,7 @@ async function initRecording(){
     progressVideo.onloadedmetadata= async function(){
 
         console.log("Loaded data")
-        const pip = await progressVideo.requestPictureInPicture();
+        pip = await progressVideo.requestPictureInPicture();
 
         progressCanvas.width = pip.width;
         progressCanvas.height = pip.height;
