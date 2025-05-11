@@ -63,6 +63,7 @@ module.exports = {
         },
         compress: true,
         port: 8080,
+        allowedHosts: "all",
     },
 
     mode: 'development'

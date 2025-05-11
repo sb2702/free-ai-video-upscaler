@@ -286,10 +286,10 @@
     node-fetch "~2.6.1"
     seedrandom "^3.0.5"
 
-"@tensorflow/tfjs-tflite@^0.0.1-alpha.10":
-  version "0.0.1-alpha.10"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-tflite/-/tfjs-tflite-0.0.1-alpha.10.tgz#70051209a154e82031b5ee131890c41b368f0af7"
-  integrity sha512-/qmqsRBTg+XCWgNomJ/gdZIKFMpGiTEAwMhqk/7cOZEp/fTV69GuknOoSQjloYGWasQIDIriQO3bpi6T4PTEnA==
+"@tensorflow/tfjs-tflite@0.0.1-alpha.9":
+  version "0.0.1-alpha.9"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-tflite/-/tfjs-tflite-0.0.1-alpha.9.tgz#bd01174f5031d735016d8192c78195f1b4b4fe5c"
+  integrity sha512-m24x8edwEDPn9iSYOIY+4XPVqx2J6nquZiWtjAyQNWviWhpr+rASq0vuXWipbRlQape5epKtTMEou8zD86Ngjg==
 
 "@types/body-parser@*":
   version "1.19.5"
@@ -651,11 +651,6 @@
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/@webpack-cli/serve/-/serve-2.0.5.tgz#325db42395cd49fe6c14057f9a900e427df8810e"
   integrity sha512-lqaoKnRYBdo1UgDX8uF24AfGMifWK19TxPmM5FHc2vAGxrJ/qtyUyFBWoY1tISZdelsQ5fBcOusifo5o5wSJxQ==
-
-"@websr/websr@^0.0.11":
-  version "0.0.11"
-  resolved "https://registry.yarnpkg.com/@websr/websr/-/websr-0.0.11.tgz#6da7403a9f9aa88187f5b3aaf918ba328b5ba780"
-  integrity sha512-g1yjftLdp4HlbMtyasBcDUD79svhciJzghHS37k7eZUayjgJmQ35NapTXsVS7RtP7MldoPbXTWUynjqXNdCHiA==
 
 "@xtuc/ieee754@^1.2.0":
   version "1.2.0"

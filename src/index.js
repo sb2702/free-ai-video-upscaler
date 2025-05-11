@@ -142,6 +142,7 @@ async function index() {
         await import( '@tensorflow/tfjs-backend-cpu');
         tf = await import('@tensorflow/tfjs-core');
         tflite =  await import('@tensorflow/tfjs-tflite');
+
         tfliteModelP =  tflite.loadTFLiteModel('./content_detection_mobilenet_v3.tflite',  {numThreads: 1, enableProfiling: false, maxProfilingBufferEntries: 1024});
         identify_user();
 
