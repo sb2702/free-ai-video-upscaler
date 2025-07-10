@@ -630,7 +630,7 @@ function showError(message){
 
 function getBitrate() {
 
-    return 1e7 * (video.videoWidth*video.videoHeight*4)/(1280*720);
+    return 5e6 * (video.videoWidth*video.videoHeight*4)/(1280*720);
 }
 
 function humanFileSize(bytes, si=false, dp=1) {

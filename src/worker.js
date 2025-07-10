@@ -136,7 +136,7 @@ async function initRecording( data, duration, handle){
 
 
 
-    let bitrate = 1e7 * (resolution.width*resolution.height*4)/(1280*720);
+    let bitrate = 5e6 * (resolution.width*resolution.height*4)/(1280*720);
 
     let videoData;
     let audioData;
@@ -286,6 +286,8 @@ async function initRecording( data, duration, handle){
 
         try{
             decoder.decode(chunk);
+
+            console.log("Decodded queue size", decoder.decodeQueueSize);
         } catch (e) {
 
             console.log("Decoder Error");
@@ -304,7 +306,7 @@ async function initRecording( data, duration, handle){
 
     let flush_check = setInterval(function () {
 
-        if(performance.now() - last_decode > 1000 && (encoded_chunks.length - current_frame < 10)) decoder.flush()
+        if(performance.now() - last_decode > decoder_buffer_length && (encoded_chunks.length - current_frame < 10)) decoder.flush()
 
     }, 100);
 
@@ -369,7 +371,25 @@ async function initRecording( data, duration, handle){
         try{
 
 
+
+            if(encoder.encodeQueueSize >= 20){
+                await new Promise(function (resolve) {
+                   
+                    function check(){
+                        if(encoder.encodeQueueSize < 20){
+                            resolve();
+                        } else {
+                            setTimeout(check, 100);
+                        }
+                    }
+
+                    check();
+                })
+            }
+
+
             encoder.encode(new_frame, {keyFrame: source_chunk.type === 'key'});
+           
 
         } catch (e) {
 
@@ -388,12 +408,15 @@ async function initRecording( data, duration, handle){
 
             let chunk = encoded_chunks[i+decoder_buffer_length];
 
+
+
             decode_promises.push(new Promise(function (resolve, reject) {
                 const callback = function (frame){ resolve(frame);}
                 decode_callbacks.push(callback);
             }));
 
             try{
+         
                 decoder.decode(chunk);
             } catch (e) {
             }
