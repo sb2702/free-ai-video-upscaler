@@ -273,7 +273,7 @@ async function initRecording( data, duration, handle){
 
     const decode_promises = [];
 
-    const decoder_buffer_length =1000;
+    const decoder_buffer_length =20;
 
     for (let i = 0; i < Math.min(encoded_chunks.length, decoder_buffer_length); i ++){
 
@@ -327,18 +327,12 @@ async function initRecording( data, duration, handle){
 
         let render_promise = websr.render(frame);
         ctx.transferFromImageBitmap(bitmap2);
-        await render_promise;
+        //render_promise;
 
-        await websr.context.device.queue.onSubmittedWorkDone();
-
-
+      //  await websr.context.device.queue.onSubmittedWorkDone();
 
 
-        let time_since = performance.now() - last_decode;
 
-        await new Promise(function (resolve) {
-            setTimeout(resolve, Math.max(0, 30-time_since))
-        })
 
         current_frame = i;
 
