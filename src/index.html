@@ -57,7 +57,7 @@
 
 <h1 id="title" x-show="$store.state === 'init' || $store.state === 'unsupported'">Free AI Video Upscaler</h1>
 <p id="hero-text" x-show="$store.state === 'init' || $store.state === 'unsupported'">Upscale videos <a href="https://github.com/sb2702/websr">with AI</a> for free, right in your browser - no signups, installation or config necessary. It is fast, free and open source, but the quality is not as good as GPU-powered AI Upscaling software.
-<p style=" font-size: 0.8rem;" x-show="$store.state === 'init' || $store.state === 'unsupported'"> If you're looking for better quality upscaling, consider <a href="https://fast.upscaler.video">Fast Upscaler</a> (fast, easy, paid)  <br/>  or <a target="_blank" href="https://github.com/k4yt3x/video2x"> Video2x</a> (free, requires GPU and installation/config)</p>
+<p style=" font-size: 0.8rem;" x-show="$store.state === 'init' || $store.state === 'unsupported'"> If you're looking for better quality upscaling, consider <a href="https://aivideoupscaler.com">Fast AI Video Upscaler</a> (fast, easy, paid)  <br/>  or <a target="_blank" href="https://github.com/k4yt3x/video2x"> Video2x</a> (free, requires GPU and installation/config)</p>
 
 <span x-show="$store.state === 'info'">
     This is a quick, free no-nonsense tool for upscaling videos with AI right in the browser. There is no software to install, and no registration or sign up required. All you need to do is input a video, and your browser will do all of the AI Upscaling and video processing. This software tool is completely free and open source, and works particularly well for animated content.
@@ -119,7 +119,7 @@ I built it because from previous experience as a casual user who just wants to u
 
         <div style="width: 100%; height: 10px;"></div>
         <p style="width: 100%;">Upscaling <span x-text="$store.filename" class="monospace"></span>  to  <span class="monospace"><span x-text="$store.width*2" ></span>x<span x-text="$store.height*2"></span></span>. Output: ~ <span class="monospace" x-text="$store.size"></span></p>
-       <p style="width: 100%; font-size: 0.8rem;"> If you're looking for better quality upscaling, consider <a href="https://fast.upscaler.video">Fast Upscaler</a> (fast, easy, paid)  <br/>  or <a target="_blank" href="https://github.com/k4yt3x/video2x"> Video2x</a> (free, requires GPU and installation/config)</p>
+       <p style="width: 100%; font-size: 0.8rem;"> If you're looking for better quality upscaling, consider <a href="https://aivideoupscaler.com">Fast AI Video Upscaler</a> (fast, easy, paid)  <br/>  or <a target="_blank" href="https://github.com/k4yt3x/video2x"> Video2x</a> (free, requires GPU and installation/config)</p>
 
         <div id="settings" style="margin-top: 20px; margin-bottom: 20px; width: 100%; height: fit-content; border-radius: 10px; font-size: 1rem;" class="panel">
 
@@ -196,7 +196,11 @@ I built it because from previous experience as a casual user who just wants to u
     </div>
 
 
+    <p x-show="$store.state === 'complete'">If you like the tool, please consider giving a like to <a href="https://www.youtube.com/watch?v=hhweJlZsDFE" target="_blank">this YouTube video</a>, <br/> it helps more people discover Free AI Video Upscaler</p>
+
     <div id="download-link"  x-show="$store.state === 'complete'">
+
+
 
         <div style="margin: auto; display: block; width: fit-content;" x-show="$store.target=='writer'">Saved result to <span x-text="$store.download_name" class="monospace"></span></div>
         <button  type="button" class="btn btn-outline-primary"  onclick="location.reload();">Upscale another
