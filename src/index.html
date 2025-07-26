@@ -93,9 +93,9 @@ I built it because from previous experience as a casual user who just wants to u
     <p class="w-full text-2xl text-center my-5 mx-auto">An error ocurred while processing the video: <span class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1" x-text="$store.error"></span></p>
 </div>
 
-<div id="file-load-panel" class="w-[640px] mx-auto bg-gray-light rounded-3xl h-[680px] p-6 box-border border border-gray-border block"  x-show="$store.state === 'init'">
+<div id="file-load-panel" class="w-[640px] mx-auto bg-gray-light rounded-3xl h-[360px] p-6 box-border border border-gray-border block"  x-show="$store.state === 'init'">
     <p class="w-full text-2xl text-center my-5 mx-auto">Choose a video to upscale</p>
-    <button type="button" class="btn btn-primary mx-auto my-16 py-2 px-4 rounded-lg font-extrabold block"  id="input-button" onclick="chooseFile(this)">Choose a video file</button>
+    <button type="button" class="btn btn-primary mx-auto my-16 py-2 px-4 rounded-lg font-extrabold block bg-blue-900"  id="input-button" onclick="chooseFile(this)">Choose a video file</button>
 </div>
 
 
