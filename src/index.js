@@ -368,8 +368,12 @@ async function setupPreview(data) {
 
 
         function setFullScreenLocation(){
-            fullScreenButton.style.left = `${imageCompare.offsetLeft + 550}px`;
-            fullScreenButton.style.top = `${imageCompare.offsetTop + 300}px`;
+            const containerWidth = Math.round(video.videoWidth/video.videoHeight*318);
+            const containerHeight = 318;
+            
+            // Position at bottom-right of the preview container (with small padding)
+            fullScreenButton.style.left = `${imageCompare.offsetLeft + containerWidth - 20}px`;
+            fullScreenButton.style.top = `${imageCompare.offsetTop + containerHeight - 20}px`;
         }
 
         setTimeout(setFullScreenLocation, 20);
