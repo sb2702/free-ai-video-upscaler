@@ -57,7 +57,7 @@
 
 <h1 id="title" x-show="$store.state === 'init' || $store.state === 'unsupported'" class="w-full text-center  my-16 font-extrabold text-6xl text-blue-900">Free AI Video Upscaler</h1>
 <p id="hero-text" x-show="$store.state === 'init' || $store.state === 'unsupported'" class="text-gray-900 text-xl my-4 mx-auto w-[640px] text-center">Upscale videos <a href="https://github.com/sb2702/websr">with AI</a> for free, right in your browser - no signups, installation or config necessary. It is fast, free and open source, but the quality is not as good as GPU-powered AI Upscaling software.
-<p class="text-xs w-[640px] mx-auto text-center mb-5" x-show="$store.state === 'init' || $store.state === 'unsupported'"> If you're looking for better quality upscaling, consider <a href="https://aivideoupscaler.com" class="text-primary">Fast AI Video Upscaler</a> (fast, easy, paid)  <br/>  or <a target="_blank" href="https://github.com/k4yt3x/video2x" class="text-primary"> Video2x</a> (free, requires GPU and installation/config)</p>
+<p class="text-xs w-[640px] mx-auto text-center mb-5 hidden" x-show="$store.state === 'init' || $store.state === 'unsupported'"> If you're looking for better quality upscaling, consider <a href="https://aivideoupscaler.com" class="text-primary">Fast AI Video Upscaler</a> (fast, easy, paid)  <br/>  or <a target="_blank" href="https://github.com/k4yt3x/video2x" class="text-primary"> Video2x</a> (free, requires GPU and installation/config)</p>
 
 <span x-show="$store.state === 'info'" class="w-[640px] mx-auto block text-center mb-5">
     This is a quick, free no-nonsense tool for upscaling videos with AI right in the browser. There is no software to install, and no registration or sign up required. All you need to do is input a video, and your browser will do all of the AI Upscaling and video processing. This software tool is completely free and open source, and works particularly well for animated content.
@@ -117,11 +117,11 @@ I built it because from previous experience as a casual user who just wants to u
 
     <div id="preview"  x-show="$store.state === 'preview'">
 
-        <div class="w-full h-3"></div>
-        <p class="w-full">Upscaling <span x-text="$store.filename" class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1"></span>  to  <span class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1"><span x-text="$store.width*2" ></span>x<span x-text="$store.height*2"></span></span>. Output: ~ <span class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1" x-text="$store.size"></span></p>
-       <p class="w-full text-xs"> If you're looking for better quality upscaling, consider <a href="https://aivideoupscaler.com">Fast AI Video Upscaler</a> (fast, easy, paid)  <br/>  or <a target="_blank" href="https://github.com/k4yt3x/video2x"> Video2x</a> (free, requires GPU and installation/config)</p>
+   
+        <p class="w-full mb-2 text-center  ">Upscaling <span x-text="$store.filename" class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1"></span>  to  <span class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1"><span x-text="$store.width*2" ></span>x<span x-text="$store.height*2"></span></span>. Output: ~ <span class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1" x-text="$store.size"></span></p>
+       <p class="w-full text-sm my-2 text-center"> If you're looking for better quality upscaling, consider <a href="https://aivideoupscaler.com" class="text-primary">Fast AI Video Upscaler</a> (fast, easy, paid)    or <a class="text-primary" target="_blank" href="https://github.com/k4yt3x/video2x"> Video2x</a> (free, requires GPU and installation/config)</p>
 
-        <div id="settings" class="mt-5 mb-5 w-full h-fit rounded-2xl text-base bg-gray-light border border-gray-border p-6">
+        <div id="settings" class="mt-3 mb-3 w-full h-fit rounded-2xl text-base bg-gray-light border border-gray-border p-4">
 
             <table class="w-full">
                 <tr class="hidden">
@@ -177,7 +177,7 @@ I built it because from previous experience as a casual user who just wants to u
             <img src="folder.svg" alt="Choose a location to save the file to"  width="10" height="10">
         </button>
 
-        <button  type="button" class="btn btn-primary relative mx-auto w-fit block"  onclick="initRecording()"  x-show="$store.target === 'blob'">Start upscaling &nbsp
+        <button  type="button" class="btn btn-primary relative mx-auto w-fit block flex flex-row"  onclick="initRecording()"  x-show="$store.target === 'blob'">Start upscaling &nbsp
             <img src="play.svg" alt="Start upscaling your video"  width="10" height="10">
         </button>
     </div>
