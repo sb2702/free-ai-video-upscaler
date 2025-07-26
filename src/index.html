@@ -52,14 +52,14 @@
     gtag('config', 'G-QE7MR4DVTV');
 </script>
 
-<body x-data="{}" style="display: none;">
+<body x-data="{}" style="display: none;" class="font-manrope">
 
 
-<h1 id="title" x-show="$store.state === 'init' || $store.state === 'unsupported'">Free AI Video Upscaler</h1>
-<p id="hero-text" x-show="$store.state === 'init' || $store.state === 'unsupported'">Upscale videos <a href="https://github.com/sb2702/websr">with AI</a> for free, right in your browser - no signups, installation or config necessary. It is fast, free and open source, but the quality is not as good as GPU-powered AI Upscaling software.
-<p style=" font-size: 0.8rem;" x-show="$store.state === 'init' || $store.state === 'unsupported'"> If you're looking for better quality upscaling, consider <a href="https://aivideoupscaler.com">Fast AI Video Upscaler</a> (fast, easy, paid)  <br/>  or <a target="_blank" href="https://github.com/k4yt3x/video2x"> Video2x</a> (free, requires GPU and installation/config)</p>
+<h1 id="title" x-show="$store.state === 'init' || $store.state === 'unsupported'" class="w-full text-center  my-16 font-extrabold text-6xl text-blue-900">Free AI Video Upscaler</h1>
+<p id="hero-text" x-show="$store.state === 'init' || $store.state === 'unsupported'" class="text-gray-900 text-xl my-4 mx-auto w-[640px] text-center">Upscale videos <a href="https://github.com/sb2702/websr">with AI</a> for free, right in your browser - no signups, installation or config necessary. It is fast, free and open source, but the quality is not as good as GPU-powered AI Upscaling software.
+<p class="text-xs w-[640px] mx-auto text-center mb-5" x-show="$store.state === 'init' || $store.state === 'unsupported'"> If you're looking for better quality upscaling, consider <a href="https://aivideoupscaler.com">Fast AI Video Upscaler</a> (fast, easy, paid)  <br/>  or <a target="_blank" href="https://github.com/k4yt3x/video2x"> Video2x</a> (free, requires GPU and installation/config)</p>
 
-<span x-show="$store.state === 'info'">
+<span x-show="$store.state === 'info'" class="w-[640px] mx-auto block text-center mb-5">
     This is a quick, free no-nonsense tool for upscaling videos with AI right in the browser. There is no software to install, and no registration or sign up required. All you need to do is input a video, and your browser will do all of the AI Upscaling and video processing. This software tool is completely free and open source, and works particularly well for animated content.
 I built it because from previous experience as a casual user who just wants to upscale a few videos you have around, it's surprisingly frustrating. There are paid tools like <a href="https://www.topazlabs.com/">Topaz Labs </a>  which are excellent but also overkill for non-professional work, or open source projects like <a href="https://github.com/k4yt3x/video2x"> Video2X </a>  which require a lot of setup and configuration. This tool, in contrast, is designed to be quick, fast, free, simple and easy to use. It is based on my <a href="https://github.com/sb2702/websr">WebSR</a> project, which is an open-source WebSDK for applying real-time super resolution to videos on the web. It works by porting several open source AI Upscaling algorithms like <a href="https://github.com/bloc97/Anime4K"> Anime4K</a> and <a href="https://github.com/xinntao/Real-ESRGAN">RealESRGAN</a> into WebGPU. The WebSR SDK then allows you to easily apply these AI Upscaling (Super resolution) algorithms to each frame of a video directly in the browser.
 </span>
@@ -70,37 +70,37 @@ I built it because from previous experience as a casual user who just wants to u
     <br>
 </div>
 
-<div id="unsupported-panel" class="panel"   x-show="$store.state === 'unsupported'" style="height: fit-content;">
-    <p class="panel-text">Your browser does not support <span id="missing-component" x-text="$store.component"></span>, a required browser feature for this tool.  <br> <br> Try using the latest version of <img  alt="You can use the latest Chrome browser" src="chrome.svg" style="display: inline;" width="25" height="25"> Chrome or <img alt="You can use the latest Edge browser"  src="edge.svg" style="display: inline;" width="25" height="25"> Edge on a 💻 Laptop or 🖥️ Desktop.
+<div id="unsupported-panel" class="w-[640px] mx-auto bg-gray-light rounded-3xl h-fit p-6 box-border border border-gray-border flex justify-center items-center"   x-show="$store.state === 'unsupported'">
+    <p class="w-full text-2xl text-center my-5 mx-auto">Your browser does not support <span id="missing-component" x-text="$store.component" class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1 text-xl"></span>, a required browser feature for this tool.  <br> <br> Try using the latest version of <img  alt="You can use the latest Chrome browser" src="chrome.svg" style="display: inline;" width="25" height="25"> Chrome or <img alt="You can use the latest Edge browser"  src="edge.svg" style="display: inline;" width="25" height="25"> Edge on a 💻 Laptop or 🖥️ Desktop.
     </p>
 </div>
 
 
-<div class="panel" style="background: none; border: none; padding: 0;" x-show="$store.state === 'unsupported'" >
+<div class="w-[640px] mx-auto" x-show="$store.state === 'unsupported'" >
 
-    <p class="panel-text" style="margin: 30px 0; font-size: 1.25rem;"> For what it's worth, here's how it's supposed to work <a href="https://www.youtube.com/watch?v=hhweJlZsDFE" target="_blank">[YouTube link]</a></p>
+    <p class="w-full text-xl text-center my-8 mx-auto"> For what it's worth, here's how it's supposed to work <a href="https://www.youtube.com/watch?v=hhweJlZsDFE" target="_blank">[YouTube link]</a></p>
 </div>
 
 
 
 
-<div id="loading-panel" class="panel"   x-show="$store.state === 'loading'">
+<div id="loading-panel" class="w-[640px] mx-auto bg-gray-light rounded-3xl h-[680px] p-6 box-border border border-gray-border flex justify-center items-center"   x-show="$store.state === 'loading'">
 
-    <img src="loading.svg" alt="Loading"   style="width: 256px; height: 256px; margin: auto; display: block; position: relative;">
+    <img src="loading.svg" alt="Loading" class="w-64 h-64 mx-auto block relative">
 </div>
 
-<div id="error-panel" class="panel"   x-show="$store.state === 'error'">
-    <p class="panel-text">An error ocurred while processing the video: <span class="monospace" x-text="$store.error"></span></p>
+<div id="error-panel" class="w-[640px] mx-auto bg-gray-light rounded-3xl h-[680px] p-6 box-border border border-gray-border flex justify-center items-center"   x-show="$store.state === 'error'">
+    <p class="w-full text-2xl text-center my-5 mx-auto">An error ocurred while processing the video: <span class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1" x-text="$store.error"></span></p>
 </div>
 
-<div id="file-load-panel" class="panel"  x-show="$store.state === 'init'">
-    <p class="panel-text">Choose a video to upscale</p>
-    <button type="button" class="btn btn-primary"  id="input-button" onclick="chooseFile(this)">Choose a video file</button>
+<div id="file-load-panel" class="w-[640px] mx-auto bg-gray-light rounded-3xl h-[680px] p-6 box-border border border-gray-border block"  x-show="$store.state === 'init'">
+    <p class="w-full text-2xl text-center my-5 mx-auto">Choose a video to upscale</p>
+    <button type="button" class="btn btn-primary mx-auto my-16 py-2 px-4 rounded-lg font-extrabold block"  id="input-button" onclick="chooseFile(this)">Choose a video file</button>
 </div>
 
 
 
-<div id="start-panel" class="panel" x-show="$store.state === 'preview' || $store.state === 'processing' || $store.state === 'complete'">
+<div id="start-panel" class="w-[640px] mx-auto bg-gray-light rounded-3xl h-[680px] p-6 box-border border border-gray-border" x-show="$store.state === 'preview' || $store.state === 'processing' || $store.state === 'complete'">
 
 
     <div id="image-compare" >
@@ -110,29 +110,29 @@ I built it because from previous experience as a casual user who just wants to u
 
     </div>
 
-    <img src="full-screen.svg" alt="Full Screen"  width="15" height="15" id="full-screen" onclick="fullScreenPreview()" x-show="$store.state === 'preview'">
+    <img src="full-screen.svg" alt="Full Screen"  width="15" height="15" id="full-screen" onclick="fullScreenPreview()" x-show="$store.state === 'preview'" class="absolute z-10 cursor-pointer">
 
 
     <br>
 
     <div id="preview"  x-show="$store.state === 'preview'">
 
-        <div style="width: 100%; height: 10px;"></div>
-        <p style="width: 100%;">Upscaling <span x-text="$store.filename" class="monospace"></span>  to  <span class="monospace"><span x-text="$store.width*2" ></span>x<span x-text="$store.height*2"></span></span>. Output: ~ <span class="monospace" x-text="$store.size"></span></p>
-       <p style="width: 100%; font-size: 0.8rem;"> If you're looking for better quality upscaling, consider <a href="https://aivideoupscaler.com">Fast AI Video Upscaler</a> (fast, easy, paid)  <br/>  or <a target="_blank" href="https://github.com/k4yt3x/video2x"> Video2x</a> (free, requires GPU and installation/config)</p>
+        <div class="w-full h-3"></div>
+        <p class="w-full">Upscaling <span x-text="$store.filename" class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1"></span>  to  <span class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1"><span x-text="$store.width*2" ></span>x<span x-text="$store.height*2"></span></span>. Output: ~ <span class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1" x-text="$store.size"></span></p>
+       <p class="w-full text-xs"> If you're looking for better quality upscaling, consider <a href="https://aivideoupscaler.com">Fast AI Video Upscaler</a> (fast, easy, paid)  <br/>  or <a target="_blank" href="https://github.com/k4yt3x/video2x"> Video2x</a> (free, requires GPU and installation/config)</p>
 
-        <div id="settings" style="margin-top: 20px; margin-bottom: 20px; width: 100%; height: fit-content; border-radius: 10px; font-size: 1rem;" class="panel">
+        <div id="settings" class="mt-5 mb-5 w-full h-fit rounded-2xl text-base bg-gray-light border border-gray-border p-6">
 
-            <table style="width: 100%;">
-                <tr style="display: none;">
-                    <th style="width: 50%;">Settings</th>
+            <table class="w-full">
+                <tr class="hidden">
+                    <th class="w-1/2">Settings</th>
                     <th></th>
                 </tr>
-                <tr title="Small is faster, Large is slower but has the most quality improvement" style="height: 60px;">
-                    <td style="width: 40%;" >
+                <tr title="Small is faster, Large is slower but has the most quality improvement" class="h-15">
+                    <td class="w-2/5">
                         Upscaling Network
                     </td>
-                    <td style="float: right; padding: 10px 0;">
+                    <td class="float-right py-2">
                         <input type="radio" class="btn-check" name="options" id="option1"  value="small"  onclick="switchNetworkSize(this);" autocomplete="off">
                         <label class="btn btn-outline-primary" for="option1">Small
                         </label>
@@ -148,11 +148,11 @@ I built it because from previous experience as a casual user who just wants to u
                     </td>
                 </tr>
 
-                <tr  style="height: 60px;" x-show="$store.style === 'unknown'">
-                    <td style="width: 40%;" >
+                <tr class="h-15" x-show="$store.style === 'unknown'">
+                    <td class="w-2/5">
                         Content Style
                     </td>
-                    <td style="float: right; padding: 10px 0;">
+                    <td class="float-right py-2">
                         <input type="radio" class="btn-check" name="options2" id="option4"  value="an"  onclick="switchNetworkStyle(this);" autocomplete="off">
                         <label class="btn btn-outline-primary" for="option4">Animated
                         </label>
@@ -173,11 +173,11 @@ I built it because from previous experience as a casual user who just wants to u
         </div>
 
 
-        <button  type="button" class="btn btn-primary start"  onclick="initRecording()" x-show="$store.target === 'writer'">Choose output location &nbsp
+        <button  type="button" class="btn btn-primary relative mx-auto w-fit block"  onclick="initRecording()" x-show="$store.target === 'writer'">Choose output location &nbsp
             <img src="folder.svg" alt="Choose a location to save the file to"  width="10" height="10">
         </button>
 
-        <button  type="button" class="btn btn-primary start"  onclick="initRecording()"  x-show="$store.target === 'blob'">Start upscaling &nbsp
+        <button  type="button" class="btn btn-primary relative mx-auto w-fit block"  onclick="initRecording()"  x-show="$store.target === 'blob'">Start upscaling &nbsp
             <img src="play.svg" alt="Start upscaling your video"  width="10" height="10">
         </button>
     </div>
@@ -187,7 +187,7 @@ I built it because from previous experience as a casual user who just wants to u
 
 
     <div id="info"  x-show="$store.state === 'processing'">
-        <p>Upscaling <span x-text="$store.filename" class="monospace"></span> .Estimated time left: <span x-text="$store.eta"></span></p>
+        <p>Upscaling <span x-text="$store.filename" class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1"></span> .Estimated time left: <span x-text="$store.eta"></span></p>
 
 
         <div class="progress" id="progress">
@@ -196,18 +196,18 @@ I built it because from previous experience as a casual user who just wants to u
     </div>
 
 
-    <p x-show="$store.state === 'complete'">If you like the tool, please consider giving a like or a comment  <br/> on <a href="https://www.youtube.com/watch?v=hhweJlZsDFE" target="_blank">this YouTube video</a>,  it helps more people discover Free AI Video Upscaler</p>
+    <p x-show="$store.state === 'complete'" class="text-center">If you like the tool, please consider giving a like or a comment  <br/> on <a href="https://www.youtube.com/watch?v=hhweJlZsDFE" target="_blank">this YouTube video</a>,  it helps more people discover Free AI Video Upscaler</p>
 
     <div id="download-link"  x-show="$store.state === 'complete'">
 
 
 
-        <div style="margin: auto; display: block; width: fit-content;" x-show="$store.target=='writer'">Saved result to <span x-text="$store.download_name" class="monospace"></span></div>
+        <div class="mx-auto block w-fit" x-show="$store.target=='writer'">Saved result to <span x-text="$store.download_name" class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1"></span></div>
         <button  type="button" class="btn btn-outline-primary"  onclick="location.reload();">Upscale another
             <img src="refresh.svg" alt="Upscale another video"  width="20" height="20">
         </button>
 
-        <a  x-bind:href="$store.download_url"  x-bind:download="$store.download_name"  x-show="$store.target=='blob'" style="margin: auto;"><button  type="button" class="btn btn-primary" id="download">Download
+        <a  x-bind:href="$store.download_url"  x-bind:download="$store.download_name"  x-show="$store.target=='blob'" class="mx-auto"><button  type="button" class="btn btn-primary" id="download">Download
             <img src="download-icon.svg" width="20" height="20">
         </button></a>
 
@@ -221,12 +221,12 @@ I built it because from previous experience as a casual user who just wants to u
 </div>
 
 
-<div id="footer">
-    <div style="float: left">
+<div id="footer" class="fixed left-0 bottom-0 w-full text-gray-text text-center text-sm p-5">
+    <div class="float-left">
         Souce code <a href="https://github.com/sb2702/free-ai-video-upscaler" >on Github</a>.  &nbsp;  &nbsp; © Sam Bhattacharyya 2025
     </div>
 
-    <div style="float: right">
+    <div class="float-right">
         Issues, questions or suggestions, go <a href="https://videoupscaler.canny.io/issues-requests"> here</a>
     </div>
 
