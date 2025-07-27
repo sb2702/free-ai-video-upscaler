@@ -95,7 +95,7 @@ I built it because from previous experience as a casual user who just wants to u
 
 <div id="file-load-panel" class="w-[640px] mx-auto bg-gray-light rounded-3xl h-[360px] p-6 box-border border border-gray-border block"  x-show="$store.state === 'init'">
     <p class="w-full text-2xl text-center my-5 mx-auto">Choose a video to upscale</p>
-    <button type="button" class="btn btn-primary mx-auto my-16 py-2 px-4 rounded-lg font-extrabold block bg-blue-900"  id="input-button" onclick="chooseFile(this)">Choose a video file</button>
+    <button type="button" class="btn btn-primary mx-auto my-16 py-2 px-4 rounded-lg font-extrabold block bg-blue-900 flex flex-row"  id="input-button" onclick="chooseFile(this)">Choose a video file</button>
 </div>
 
 
@@ -176,7 +176,7 @@ I built it because from previous experience as a casual user who just wants to u
         </div>
 
 
-        <button  type="button" class="btn btn-primary relative mx-auto w-fit block"  onclick="initRecording()" x-show="$store.target === 'writer'">Choose output location &nbsp
+        <button  type="button" class="btn btn-primary relative mx-auto w-fit block flex flex-row"  onclick="initRecording()" x-show="$store.target === 'writer'">Choose output location &nbsp
             <img src="folder.svg" alt="Choose a location to save the file to"  width="10" height="10">
         </button>
 
@@ -199,18 +199,18 @@ I built it because from previous experience as a casual user who just wants to u
     </div>
 
 
-    <p x-show="$store.state === 'complete'" class="text-center">If you like the tool, please consider giving a like or a comment  <br/> on <a href="https://www.youtube.com/watch?v=hhweJlZsDFE" target="_blank">this YouTube video</a>,  it helps more people discover Free AI Video Upscaler</p>
+    <p x-show="$store.state === 'complete'" class="text-center my-3">If you like the tool, please consider giving a like  <br/> on <a href="https://www.youtube.com/watch?v=hhweJlZsDFE" class="text-primary" target="_blank">this YouTube video</a>,  it helps more people discover Free AI Video Upscaler</p>
 
-    <div id="download-link"  x-show="$store.state === 'complete'">
+    <div id="download-link" class="flex flex-row"  x-show="$store.state === 'complete'">
 
 
 
         <div class="mx-auto block w-fit" x-show="$store.target=='writer'">Saved result to <span x-text="$store.download_name" class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1"></span></div>
-        <button  type="button" class="btn btn-outline-primary"  onclick="location.reload();">Upscale another
+        <button  type="button" class="btn btn-outline-primary flex flex-row"  onclick="location.reload();">Upscale another
             <img src="refresh.svg" alt="Upscale another video"  width="20" height="20">
         </button>
 
-        <a  x-bind:href="$store.download_url"  x-bind:download="$store.download_name"  x-show="$store.target=='blob'" class="mx-auto"><button  type="button" class="btn btn-primary" id="download">Download
+        <a  x-bind:href="$store.download_url"  x-bind:download="$store.download_name"  x-show="$store.target=='blob'" class="mx-auto"><button  type="button" class="btn btn-primary flex flex-row" id="download">Download
             <img src="download-icon.svg" width="20" height="20">
         </button></a>
 
