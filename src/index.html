@@ -201,18 +201,23 @@ I built it because from previous experience as a casual user who just wants to u
 
     <p x-show="$store.state === 'complete'" class="text-center my-3">If you like the tool, please consider giving a like  <br/> on <a href="https://www.youtube.com/watch?v=hhweJlZsDFE" class="text-primary" target="_blank">this YouTube video</a>,  it helps more people discover Free AI Video Upscaler</p>
 
-    <div id="download-link" class="flex flex-row"  x-show="$store.state === 'complete'">
+    <div id="download-link" class="flex flex-col"  x-show="$store.state === 'complete'">
 
 
 
-        <div class="mx-auto block w-fit" x-show="$store.target=='writer'">Saved result to <span x-text="$store.download_name" class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1"></span></div>
-        <button  type="button" class="btn btn-outline-primary flex flex-row mx-auto"  onclick="location.reload();">Upscale another
-            <img src="refresh.svg" alt="Upscale another video"  width="20" height="20">
-        </button>
-
-        <a  x-bind:href="$store.download_url"  x-bind:download="$store.download_name"  x-show="$store.target=='blob'" class="mx-auto"><button  type="button" class="btn btn-primary flex flex-row" id="download">Download
-            <img src="download-icon.svg" width="20" height="20">
-        </button></a>
+        <div class="mx-auto my-2" x-show="$store.target=='writer'">Saved result to <span x-text="$store.download_name" class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1"></span></div>
+        
+        
+        <div class="flex flex-row">
+            <button  type="button" class="btn btn-outline-primary flex flex-row mx-auto"  onclick="location.reload();">Upscale another
+                <img src="refresh.svg" alt="Upscale another video"  width="20" height="20">
+            </button>
+    
+            <a  x-bind:href="$store.download_url"  x-bind:download="$store.download_name"  x-show="$store.target=='blob'" class="mx-auto"><button  type="button" class="btn btn-primary flex flex-row" id="download">Download
+                <img src="download-icon.svg" width="20" height="20">
+            </button></a>
+    
+        </div>
 
 
 
