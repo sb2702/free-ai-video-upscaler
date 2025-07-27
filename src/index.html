@@ -189,8 +189,8 @@ I built it because from previous experience as a casual user who just wants to u
 
 
 
-    <div id="info"  x-show="$store.state === 'processing'">
-        <p>Upscaling <span x-text="$store.filename" class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-1"></span> .Estimated time left: <span x-text="$store.eta"></span></p>
+    <div id="info"  class="" x-show="$store.state === 'processing'">
+        <p class="text-center mx-auto my-2">Upscaling <span x-text="$store.filename" class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-auto text-center"></span> .Estimated time left: <span x-text="$store.eta"></span></p>
 
 
         <div class="progress" id="progress">
@@ -226,11 +226,11 @@ I built it because from previous experience as a casual user who just wants to u
 
 <div id="footer" class="fixed left-0 bottom-0 w-full text-gray-text text-center text-sm p-5">
     <div class="float-left">
-        Souce code <a href="https://github.com/sb2702/free-ai-video-upscaler" >on Github</a>.  &nbsp;  &nbsp; © Sam Bhattacharyya 2025
+        Souce code <a class="text-primary" href="https://github.com/sb2702/free-ai-video-upscaler" >on Github</a>.  &nbsp;  &nbsp; © Sam Bhattacharyya 2025
     </div>
 
     <div class="float-right">
-        Issues, questions or suggestions, go <a href="https://videoupscaler.canny.io/issues-requests"> here</a>
+        Issues, questions or suggestions, go <a class="text-primary" href="https://videoupscaler.canny.io/issues-requests"> here</a>
     </div>
 
 </div>
