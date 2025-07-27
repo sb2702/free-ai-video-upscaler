@@ -386,10 +386,29 @@ async function setupPreview(data) {
 
         imageCompare.addEventListener('fullscreenchange', function () {
             if(!document.fullscreenElement){
+                // Reset canvas styles
                 upscaled_canvas.style.width = ``;
                 upscaled_canvas.style.height = ``;
                 original_canvas.style.width = ``;
                 original_canvas.style.height = ``;
+                
+                // Reset container styles to original preview dimensions
+                const imageCompareOuter = document.getElementById('image-compare-outer');
+                const imageCompareInner = document.getElementById('image-compare');
+                
+                // Reset outer container
+                imageCompareOuter.style.width = ``;
+                imageCompareOuter.style.height = ``;
+                imageCompareOuter.style.backgroundColor = ``;
+                imageCompareOuter.style.display = ``;
+                imageCompareOuter.style.justifyContent = ``;
+                imageCompareOuter.style.alignItems = ``;
+                
+                // Reset inner container to original preview size
+                imageCompareInner.style.height = '318px';
+                imageCompareInner.style.width = `${Math.round(video.videoWidth/video.videoHeight*318)}px`;
+                imageCompareInner.style.margin = 'auto';
+                imageCompareInner.style.position = 'relative';
             }
         });
 
