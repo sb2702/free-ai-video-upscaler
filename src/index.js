@@ -213,7 +213,7 @@ async function setupPreview(data) {
 
 
 
-    const imageCompare = document.getElementById('image-compare');
+    const imageCompare = document.getElementById('image-compare-outer');
 
 
 
@@ -235,7 +235,7 @@ async function setupPreview(data) {
         imageCompare.style.position = 'relative';
 
 
-        new ImageCompare(imageCompare).mount();
+        new ImageCompare(document.getElementById('image-compare')).mount();
         video.currentTime = video.duration * 0.2 || 0;
         if(video.requestVideoFrameCallback)  video.requestVideoFrameCallback(showPreview);
         else requestAnimationFrame(showPreview);
@@ -414,10 +414,46 @@ async function setupPreview(data) {
 
 
         function canvasFullScreen(){
-            upscaled_canvas.style.width = `${window.innerWidth}px`;
-            upscaled_canvas.style.height = `${window.innerHeight}px`;
-            original_canvas.style.width = `${window.innerWidth}px`;
-            original_canvas.style.height = `${window.innerHeight}px`;
+            // Calculate aspect ratios
+            const videoAspectRatio = video.videoWidth / video.videoHeight;
+            const screenAspectRatio = window.innerWidth / window.innerHeight;
+            
+            let displayWidth, displayHeight;
+
+            const imageCompareOuter = document.getElementById('image-compare-outer');
+            const imageCompareInner = document.getElementById('image-compare');
+            
+            // If video is wider than screen, fit to width (letterbox on top/bottom)
+            if (videoAspectRatio > screenAspectRatio) {
+                displayWidth = window.innerWidth;
+                displayHeight = window.innerWidth / videoAspectRatio;
+            } 
+            // If video is taller than screen, fit to height (pillarbox on sides)
+            else {
+                displayWidth = window.innerHeight * videoAspectRatio;
+                displayHeight = window.innerHeight;
+            }
+            
+            // Style the outer container to fill screen with black background and center content
+            imageCompareOuter.style.width = `${window.innerWidth}px`;
+            imageCompareOuter.style.height = `${window.innerHeight}px`;
+            imageCompareOuter.style.backgroundColor = 'black';
+            imageCompareOuter.style.display = 'flex';
+            imageCompareOuter.style.justifyContent = 'center';
+            imageCompareOuter.style.alignItems = 'center';
+            
+
+            console.log("Image Compare Outer", imageCompareOuter);
+            console.log("Image Compare Inner", imageCompareInner);
+            // Size the inner container to maintain aspect ratio
+            imageCompareInner.style.width = `${displayWidth}px`;
+            imageCompareInner.style.height = `${displayHeight}px`;
+            
+            // Let the canvases fill their parent container
+            upscaled_canvas.style.width = `${displayWidth}px`;
+            upscaled_canvas.style.height = `${displayHeight}px`;
+            original_canvas.style.width = `${displayWidth}px`;
+            original_canvas.style.height = `${displayHeight}px`;
         }
 
         async function fullScreenPreview(e) {
