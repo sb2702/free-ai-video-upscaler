@@ -214,82 +214,10 @@ async function setupPreview(data) {
             }}, [bitmap, upscaled, original]);
 
 
-      //  video.style.height = '100%';
-
-        const contentDetectionCanvas = document.createElement('canvas');
-        contentDetectionCanvas.width = 224;
-        contentDetectionCanvas.height = 224;
-        const contentDetectionCtx = contentDetectionCanvas.getContext('2d', {willReadFrequently: true});
-
-        let detected= null;
-
-
-        async function detectContentType(){
-
-            const preds = {
-                'animation': [],
-                'rl': []
-            }
-
-            for (let i=0; i < 5; i++){
-
-                video.currentTime = (i/10 + 0.1)*video.duration;
-
-                if(video.requestVideoFrameCallback) await new Promise((resolve => video.requestVideoFrameCallback(resolve)));
-                else await new Promise((resolve => requestAnimationFrame(resolve)));
-
-
-                contentDetectionCtx.drawImage(video, video.videoWidth/2-112, video.videoHeight/2-112, 224, 224, 0, 0, 224, 224 );
-
-                const img = tf.browser.fromPixels(contentDetectionCanvas);
-
-
-                const input = tf.div(tf.expandDims(img), 255);
-
-                let outputTensor = tfliteModel.predict(input);
-
-                const values = outputTensor.dataSync();
-
-                preds['animation'].push(values[0]);
-                preds['rl'].push(values[1]);
-
-
-            }
-            video.currentTime = video.duration * 0.2 || 0;
-
-            if(video.requestVideoFrameCallback) await new Promise((resolve => video.requestVideoFrameCallback(resolve)));
-            else await new Promise((resolve => requestAnimationFrame(resolve)));
-
-
-            const animation_score = preds['animation'].reduce((partialSum, a)=> partialSum +a, 0);
-            const rl_score = preds['rl'].reduce((partialSum, a)=> partialSum +a, 0);
-
-            const unk_thresh = 2;
-
-            if(animation_score - rl_score > unk_thresh) return 'an'
-            else if (rl_score  - animation_score > unk_thresh) return 'rl';
-            else return  null;
-
-
-
-        }
-
-
-
-
-
-        if(detected){
-            content = detected;
-            await updateNetwork();
-            Alpine.store('style', content);
-        } else {
-            // Just a guess
-            // I tried training a 3 class network, but it was producing really innacurate results compared to just real life vs 2d animation
-            // Decided I'd rather do a good job on 2d animations and real life, and then show a menu if it's maybe something else or we don't know
-            content = '3d';
-            await updateNetwork();
-            Alpine.store('style', 'unknown');
-        }
+        // Default to 'rl' (real life) network
+        content = 'rl';
+        await updateNetwork();
+        Alpine.store('style', 'rl');
 
 
 
