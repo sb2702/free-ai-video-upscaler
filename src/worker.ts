@@ -7,6 +7,7 @@ import {
   Mp4OutputFormat,
   Output,
   QUALITY_HIGH,
+  VideoSample,
   VideoSampleSink,
 } from 'mediabunny';
 
@@ -144,6 +145,39 @@ async function initRecording(
   const duration = await input.computeDuration();
 
 
+  const start_time = performance.now();
+
+
+  function reportProgress(sample: VideoSample){
+
+
+    let time_elapsed = performance.now() - start_time;
+
+
+
+    let progress  = Math.floor((sample.timestamp)/duration*100);
+
+     postMessage({cmd: 'progress', data: progress})
+
+
+
+      if(time_elapsed > 1000){
+        const processing_rate = ((sample.timestamp)/duration*100)/time_elapsed;
+        let eta = Math.round(((100-progress)/processing_rate)/1000);
+
+        postMessage({cmd: 'eta', data: prettyTime(eta)})
+
+
+    } else {
+        postMessage({cmd: 'eta', data: 'calculating...'})
+    }
+
+  
+
+  }
+
+
+
   // Loop over all frames
   for await (const sample of sink.samples()) {
    
@@ -158,10 +192,7 @@ async function initRecording(
   
     videoSource.add(sample.timestamp, sample.duration);
 
-    let progress  = Math.floor((sample.timestamp)/duration*100);
-
-    console.log("Progress", progress)
-    postMessage({cmd: 'progress', data: progress})
+    reportProgress(sample)
 
 
     videoFrame.close();
