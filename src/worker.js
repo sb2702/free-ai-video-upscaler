@@ -1,7 +1,7 @@
 
 import {MP4Demuxer} from "./demuxer_mp4";
 import {ArrayBufferTarget, FileSystemWritableFileStreamTarget, Muxer} from "mp4-muxer";
-import WebSR from "../../websr/";
+import WebSR from "../../websr";
 
 
 let gpu;
@@ -93,6 +93,7 @@ async function init(config){
         resizeHeight: config.resolution.height*2,
         resizeWidth: config.resolution.width*2,
     });
+      // @ts-expect-error - HTMLVideoElement doesn't exist in worker, but websr handles it
     await websr.render(config.bitmap);
 
     ctx.transferFromImageBitmap(bitmap2)
@@ -124,9 +125,11 @@ self.onmessage = async function (event){
 async function switchNetwork(name, weights, bitmap){
 
 
+
     websr.switchNetwork(name, weights);
 
 
+    // @ts-expect-error - HTMLVideoElement doesn't exist in worker, but websr handles it
     await websr.render(bitmap);
 
 }
