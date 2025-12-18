@@ -13,7 +13,7 @@ import {
   VideoSampleSink,
 } from 'mediabunny';
 
-import WebSR from '../../websr';
+import WebSR from '@websr/websr';
 
 import type {
   WorkerRequestMessage,
@@ -106,7 +106,7 @@ async function initRecording(
   const file = await inputHandle.getFile();
 
 
-
+  // MediaBunny handles streaming from the blob for large files
   const source = new BlobSource(file);
 
 
@@ -193,8 +193,19 @@ async function initRecording(
     const videoFrame = sample.toVideoFrame();
 
 
+    // This is for the 'before' preview. You can disable the before preview for performance
+    const bitmap = await createImageBitmap(videoFrame, {
+      resizeHeight: videoFrame.codedHeight*2,
+      resizeWidth: videoFrame.codedWidth*2
+    });
+
+
     //@ts-expect-error
-    websr.render(videoFrame);
+    websr.render(videoFrame); // Render the after in the actual network
+ 
+
+    // Render the "Before"
+    ctx.transferFromImageBitmap(bitmap)
 
 
     videoSource.add(sample.timestamp, sample.duration);
