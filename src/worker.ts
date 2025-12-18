@@ -12,6 +12,7 @@ import {
 } from 'mediabunny';
 
 import WebSR from '../../websr';
+
 import type {
   WorkerRequestMessage,
   WorkerResponseMessage,
@@ -99,7 +100,7 @@ async function initRecording(
 
   handle?: FileSystemWritableFileStream
 ): Promise<void> {
-  console.log("Data", data);
+
 
   // TODO: This is a placeholder - MediaBunny implementation in progress
   const blob = new Blob([data], { type: 'video/mp4' });
@@ -150,29 +151,19 @@ async function initRecording(
 
   function reportProgress(sample: VideoSample){
 
-
-    let time_elapsed = performance.now() - start_time;
-
-
-
-    let progress  = Math.floor((sample.timestamp)/duration*100);
+    const time_elapsed = performance.now() - start_time;
+    const progress  = Math.floor((sample.timestamp)/duration*100);
 
      postMessage({cmd: 'progress', data: progress})
 
-
-
       if(time_elapsed > 1000){
         const processing_rate = ((sample.timestamp)/duration*100)/time_elapsed;
-        let eta = Math.round(((100-progress)/processing_rate)/1000);
-
+        const eta = Math.round(((100-progress)/processing_rate)/1000);
         postMessage({cmd: 'eta', data: prettyTime(eta)})
-
 
     } else {
         postMessage({cmd: 'eta', data: 'calculating...'})
     }
-
-  
 
   }
 
