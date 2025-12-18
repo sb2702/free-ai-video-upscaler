@@ -107,6 +107,19 @@ async function initRecording( data, duration, handle){
 
 
 
+    console.log("Data", data)
+
+
+    const input = new Input({
+        formats: [MP4],
+        source: new BlobSource(file),
+      });
+
+
+
+    return;
+
+
     let bitrate = 5e6 * (resolution.width*resolution.height*4)/(1280*720);
 
     let videoData;
