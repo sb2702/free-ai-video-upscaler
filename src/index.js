@@ -8,7 +8,7 @@ import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css";
 import "./lib/image-compare-viewer.min.css"
-const worker = new Worker(new URL('./worker.js', import.meta.url));
+const worker = new Worker(new URL('./worker.ts', import.meta.url));
 const progressVideo = document.createElement('video');
 const progressCanvas = document.createElement('canvas');
 const progressCtx = progressCanvas.getContext('2d');

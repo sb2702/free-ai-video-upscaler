@@ -9,7 +9,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 
 module.exports = {
-    entry: [ "./src/index.js", './src/worker.js'],
+    entry: [ "./src/index.js", './src/worker.ts'],
     output: {
         libraryExport: "default",
         path: path.resolve(__dirname, './dist'),
@@ -19,11 +19,19 @@ module.exports = {
 
         rules: [
             {
-                test: /\.js$/,
+                test: /\.(ts|js)$/,
                 exclude: /node_modules/,
-                use: {
-                    loader: "babel-loader"
-                },
+                use: [
+                    {
+                        loader: "babel-loader"
+                    },
+                    {
+                        loader: "ts-loader",
+                        options: {
+                            allowTsInNodeModules: false
+                        }
+                    }
+                ],
             },
 
             {
