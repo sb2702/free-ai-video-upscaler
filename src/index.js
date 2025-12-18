@@ -127,7 +127,7 @@ function showUnsupported(text) {
     Alpine.store('component', text);
     Alpine.store('state', 'unsupported');
 
-    gtag('event', 'unsupported', {});
+
 }
 
 function chooseFile(e) {
@@ -162,7 +162,6 @@ function loadVideo(input){
     Alpine.store('filename',  file.name);
 
 
-    gtag('event', 'load_video', {});
 }
 
 
@@ -212,8 +211,6 @@ async function setupPreview(data) {
 
 
     async function showPreview(){
-
-        gtag('event', 'preview', {});
 
         const fullScreenButton = document.getElementById('full-screen');
 
@@ -374,7 +371,7 @@ async function setupPreview(data) {
 
         const estimated_size = (bitrate/8)*video.duration + (128/8)*video.duration; // Assume 128 kbps audio
 
-        if(estimated_size > 100*1024*1024){
+        if(estimated_size > 1900*1024*1024){
             Alpine.store('target', 'writer');
         } else {
             Alpine.store('target', 'blob');
@@ -445,23 +442,6 @@ async function setupPreview(data) {
         Alpine.store('state', 'preview');
 
 
-        Sprig('setAttributes',{
-            content: content,
-            width: video.videoWidth,
-            height: video.videoHeight
-        });
-
-        setTimeout(function () {
-            Sprig('identifyAndTrack', {
-                eventName: 'preview',
-                userId: user_id,
-
-            });
-
-            gtag('event', 'sprig', {});
-
-
-        }, 5000);
 
 
         window.switchNetworkSize = async function(el){
@@ -615,8 +595,8 @@ async function initRecording(){
 
     let handle;
 
-    // Max Blob size - 100 MB
-    if(estimated_size > 100*1024*1024){
+    // Max Blob size - 1.9 GB
+    if(estimated_size > 1900*1024*1024){
         try{
             handle = await showFilePicker();
         } catch (e) {
