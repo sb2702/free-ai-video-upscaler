@@ -7,6 +7,7 @@ import {
   Mp4OutputFormat,
   Output,
   QUALITY_HIGH,
+  ReadableStreamSource,
   StreamTarget,
   VideoSample,
   VideoSampleSink,
@@ -95,32 +96,34 @@ async function switchNetwork(name: string, weights: any, bitmap: ImageBitmap): P
 
 /**
  * Main video processing function using MediaBunny
- * TODO: Implement full pipeline with MediaBunny
  */
 async function initRecording(
-  data: ArrayBuffer,
-  handle?: FileSystemFileHandle
+  inputHandle: FileSystemFileHandle,
+  outputHandle?: FileSystemFileHandle
 ): Promise<void> {
 
+  // Get the file from the handle
+  const file = await inputHandle.getFile();
 
 
-  const blob = new Blob([data], { type: 'video/mp4' });
+
+  const source = new BlobSource(file);
+
+
 
   const input = new Input({
     formats: [MP4],
-    source: new BlobSource(blob),
+    source
   });
 
 
   let target: BufferTarget | StreamTarget;
   let writer: WritableStream | undefined;
 
-  if(handle){
-
-
-    writer = await handle.createWritable();
-    target = new StreamTarget(writer)
-  } else{
+  if (outputHandle) {
+    writer = await outputHandle.createWritable();
+    target = new StreamTarget(writer);
+  } else {
     target = new BufferTarget();
   }
 
@@ -257,7 +260,7 @@ self.onmessage = async function (event: MessageEvent<WorkerRequestMessage>) {
       break;
 
     case 'process':
-      await initRecording(event.data.data,  event.data.handle);
+      await initRecording(event.data.inputHandle, event.data.outputHandle);
       break;
 
     case 'network':

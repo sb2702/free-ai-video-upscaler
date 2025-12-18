@@ -25,7 +25,7 @@ let content: ContentType = 'rl';
 
 // Video data
 let download_name: string;
-let data: ArrayBuffer;
+let inputFileHandle: FileSystemFileHandle;
 let gpu: any;
 let websr: WebSR;
 
@@ -70,12 +70,13 @@ const networks: Record<NetworkSize, { name: string }> = {
 // Declare global window functions for Alpine to call and File System Access API
 declare global {
     interface Window {
-        chooseFile: (e?: Event) => void;
+        chooseFile: (e?: Event) => Promise<void>;
         initRecording: () => Promise<void>;
         fullScreenPreview: (e?: Event) => Promise<void>;
         switchNetworkSize: (el: HTMLInputElement) => Promise<void>;
         switchNetworkStyle: (el: HTMLInputElement) => Promise<void>;
         showSaveFilePicker: (options?: any) => Promise<FileSystemFileHandle>;
+        showOpenFilePicker: (options?: any) => Promise<FileSystemFileHandle[]>;
     }
 }
 
@@ -113,41 +114,47 @@ function showUnsupported(text: string): void {
 }
 
 /**
- * Prompt user to choose a video file
+ * Prompt user to choose a video file using File System Access API
  */
-function chooseFile(e?: Event): void {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.onchange = loadVideo;
-    input.accept = "video/mp4";
-    input.click();
+async function chooseFile(e?: Event): Promise<void> {
+    try {
+        const [fileHandle] = await window.showOpenFilePicker({
+            types: [{
+                description: 'Video Files',
+                accept: { 'video/mp4': ['.mp4'] }
+            }],
+            multiple: false
+        });
+
+        await loadVideo(fileHandle);
+    } catch (e) {
+        // User cancelled file picker
+        console.log('File selection cancelled');
+    }
 }
 
 //===================  Preview ===========================
 
 /**
- * Load video file selected by user
+ * Load video file from FileSystemFileHandle
  */
-function loadVideo(input: Event): void {
-    const target = input.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-
+async function loadVideo(fileHandle: FileSystemFileHandle): Promise<void> {
     Alpine.store('state', 'loading');
 
-    reader.onload = function (e: ProgressEvent<FileReader>) {
-        data = reader.result as ArrayBuffer;
+    // Store the file handle for later processing
+    inputFileHandle = fileHandle;
 
-        setupPreview(data);
-    }
+    // Get the file to create a preview
+    const file = await fileHandle.getFile();
 
-    reader.readAsArrayBuffer(file);
-
+    // Set up download name
     download_name = file.name.split(".")[0] + "-upscaled.mp4";
     Alpine.store('download_name', download_name);
     Alpine.store('filename', file.name);
+
+    // Read file for preview setup
+    const arrayBuffer = await file.arrayBuffer();
+    await setupPreview(arrayBuffer);
 }
 
 /**
@@ -281,7 +288,7 @@ async function setupPreview(data: ArrayBuffer): Promise<void> {
 
         const estimated_size = (bitrate/8)*video.duration + (128/8)*video.duration; // Assume 128 kbps audio
 
-        if(estimated_size > 10*1024*1024){
+        if(estimated_size > 1900*1024*1024){
             Alpine.store('target', 'writer');
         } else {
             Alpine.store('target', 'blob');
@@ -435,19 +442,23 @@ async function initRecording(): Promise<void> {
     let bitrate = getBitrate();
     const estimated_size = (bitrate / 8) * video.duration + (128 / 8) * video.duration; // Assume 128 kbps audio
 
-    let handle: FileSystemFileHandle | undefined;
+    let outputHandle: FileSystemFileHandle | undefined;
 
-    // Max Blob size - 1.9 GB
-    if (estimated_size > 10 * 1024 * 1024) {
+    // Max Blob size - 10 MB (for testing, should be much higher in production)
+    if (estimated_size > 1900 * 1024 * 1024) {
         try {
-            handle = await showFilePicker();
+            outputHandle = await showFilePicker();
         } catch (e) {
             console.warn("User aborted request");
             return Alpine.store('state', 'preview');
         }
     }
 
-    worker.postMessage({ cmd: "process", data, duration: video.duration, handle } satisfies WorkerRequestMessage, [data]);
+    worker.postMessage({
+        cmd: "process",
+        inputHandle: inputFileHandle,
+        outputHandle
+    } satisfies WorkerRequestMessage);
 }
 
 /**
