@@ -7,6 +7,7 @@ import {
   Mp4OutputFormat,
   Output,
   QUALITY_HIGH,
+  StreamTarget,
   VideoSample,
   VideoSampleSink,
 } from 'mediabunny';
@@ -29,6 +30,7 @@ let original_canvas: OffscreenCanvas;
 let resolution: Resolution;
 let ctx: ImageBitmapRenderingContext | null;
 
+// Default weights
 const weights = require('./weights/cnn-2x-m-rl.json');
 
 /**
@@ -97,12 +99,11 @@ async function switchNetwork(name: string, weights: any, bitmap: ImageBitmap): P
  */
 async function initRecording(
   data: ArrayBuffer,
-
-  handle?: FileSystemWritableFileStream
+  handle?: FileSystemFileHandle
 ): Promise<void> {
 
 
-  // TODO: This is a placeholder - MediaBunny implementation in progress
+
   const blob = new Blob([data], { type: 'video/mp4' });
 
   const input = new Input({
@@ -111,9 +112,22 @@ async function initRecording(
   });
 
 
+  let target: BufferTarget | StreamTarget;
+  let writer: WritableStream | undefined;
+
+  if(handle){
+
+
+    writer = await handle.createWritable();
+    target = new StreamTarget(writer)
+  } else{
+    target = new BufferTarget();
+  }
+
+
   const output = new Output({
     format: new Mp4OutputFormat(),
-    target: new BufferTarget(),
+    target: target,
   });
 
   const videoSource = new CanvasSource(upscaled_canvas, {
@@ -180,7 +194,6 @@ async function initRecording(
     websr.render(videoFrame);
 
 
-  
     videoSource.add(sample.timestamp, sample.duration);
 
     reportProgress(sample)
@@ -196,18 +209,21 @@ async function initRecording(
 
   await output.finalize();
 
-  const buffer = (output.target as BufferTarget).buffer;
+
+  if(writer){
+
+    postMessage({cmd: 'finished', data: null}, []);
+
+  } else{
+    const buffer = (output.target as BufferTarget).buffer;
+    postMessage({cmd: 'finished', data: buffer}, [buffer]);
+  }
 
 
-  postMessage({cmd: 'finished', data: buffer}, [buffer]);
 
 
 
-  // Early return - implementation incomplete
-  return;
 
-  // Old implementation below - will be replaced with MediaBunny pipeline
-  // This code is kept for reference during migration
 }
 
 /**

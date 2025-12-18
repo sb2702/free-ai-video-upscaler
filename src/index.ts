@@ -15,7 +15,6 @@ const worker = new Worker(new URL('./worker.ts', import.meta.url));
 let upscaled_canvas: HTMLCanvasElement;
 let original_canvas: HTMLCanvasElement;
 let video: HTMLVideoElement;
-let ctx: CanvasRenderingContext2D | null;
 
 // Network selection
 type NetworkSize = 'small' | 'medium' | 'large';
@@ -282,7 +281,7 @@ async function setupPreview(data: ArrayBuffer): Promise<void> {
 
         const estimated_size = (bitrate/8)*video.duration + (128/8)*video.duration; // Assume 128 kbps audio
 
-        if(estimated_size > 1900*1024*1024){
+        if(estimated_size > 10*1024*1024){
             Alpine.store('target', 'writer');
         } else {
             Alpine.store('target', 'blob');
@@ -436,10 +435,10 @@ async function initRecording(): Promise<void> {
     let bitrate = getBitrate();
     const estimated_size = (bitrate / 8) * video.duration + (128 / 8) * video.duration; // Assume 128 kbps audio
 
-    let handle: FileSystemWritableFileStream | undefined;
+    let handle: FileSystemFileHandle | undefined;
 
     // Max Blob size - 1.9 GB
-    if (estimated_size > 1900 * 1024 * 1024) {
+    if (estimated_size > 10 * 1024 * 1024) {
         try {
             handle = await showFilePicker();
         } catch (e) {
@@ -491,24 +490,9 @@ function humanFileSize(bytes: number, si: boolean = false, dp: number = 1): stri
 }
 
 /**
- * Format seconds into HH:MM:SS or MM:SS
- */
-function prettyTime(secs: number): string {
-    const sec_num = parseInt(secs.toString(), 10);
-    const hours = Math.floor(sec_num / 3600);
-    const minutes = Math.floor(sec_num / 60) % 60;
-    const seconds = sec_num % 60;
-
-    return [hours, minutes, seconds]
-        .map(v => v < 10 ? "0" + v : v)
-        .filter((v, i) => v !== "00" || i > 0)
-        .join(":");
-}
-
-/**
  * Show native file picker for saving output video
  */
-async function showFilePicker(): Promise<FileSystemWritableFileStream> {
+async function showFilePicker(): Promise<FileSystemFileHandle> {
     const handle = await window.showSaveFilePicker({
         startIn: 'downloads',
         suggestedName: download_name,
@@ -518,7 +502,7 @@ async function showFilePicker(): Promise<FileSystemWritableFileStream> {
         }],
     });
 
-    return await handle.createWritable();
+    return handle;
 }
 
 

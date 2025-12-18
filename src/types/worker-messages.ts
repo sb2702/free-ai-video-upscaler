@@ -13,7 +13,7 @@ export type WorkerRequestMessage =
   | { cmd: 'isSupported' }
   | { cmd: 'init'; data: InitData }
   | { cmd: 'network'; data: NetworkData }
-  | { cmd: 'process'; data: ArrayBuffer; duration: number; handle?: FileSystemWritableFileStream };
+  | { cmd: 'process'; data: ArrayBuffer; duration: number; handle?: FileSystemFileHandle };
 
 export interface InitData {
   bitmap: ImageBitmap;
