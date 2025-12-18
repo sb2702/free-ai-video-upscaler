@@ -9,7 +9,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 
 module.exports = {
-    entry: [ "./src/index.js", './src/worker.ts'],
+    entry: [ "./src/index.ts", './src/worker.ts'],
     output: {
         libraryExport: "default",
         path: path.resolve(__dirname, './dist'),

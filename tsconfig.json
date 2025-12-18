@@ -19,7 +19,6 @@
     "jsx": "preserve",
     "noEmit": false,
     "outDir": "./dist",
-    "rootDir": "./src",
     "sourceMap": true,
     "declaration": false,
     "declarationMap": false,
