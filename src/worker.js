@@ -1,8 +1,18 @@
+import {
+    BlobSource,
+    BufferTarget,
+    Input,
+    MP4,
+    Mp4OutputFormat,
+    Output,
+    QUALITY_HIGH,
+    VideoSampleSink,
+    VideoSampleSource
+  } from 'mediabunny';
+  
 
-import {MP4Demuxer} from "./demuxer_mp4";
-import {ArrayBufferTarget, FileSystemWritableFileStreamTarget, Muxer} from "mp4-muxer";
-import WebSR from "../../websr";
 
+import WebSR from '../../websr';
 
 let gpu;
 let websr;
@@ -13,48 +23,6 @@ let ctx;
 
 
 
-
-function getMP4Data(data, type, duration) {
-
-    console.log("Fetching chunks");
-
-    return new Promise(function (resolve, reject) {
-
-        let configToReturn;
-        let dataToReturn =[];
-        let lastChunk = false;
-
-
-
-
-
-
-        const demuxer = new MP4Demuxer(data, type, {
-            onConfig(config) {
-                configToReturn = config;
-                if(configToReturn && lastChunk) return resolve({config: configToReturn, encoded_chunks: dataToReturn});
-            },
-            onData(chunks) {
-
-                for(let chunk of chunks){
-                    dataToReturn.push(chunk);
-                }
-
-                let last_time = chunks[chunks.length-1].timestamp/(1000*1000);
-
-
-                if(Math.abs(duration - last_time) < 1) lastChunk = true;
-
-                if(configToReturn && lastChunk) return resolve({config: configToReturn, encoded_chunks: dataToReturn});
-            },
-            setStatus: function (){}
-        });
-
-
-    });
-
-
-}
 
 
 const weights =  require('./weights/cnn-2x-m-rl.json');

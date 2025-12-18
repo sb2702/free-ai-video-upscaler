@@ -1,9 +1,8 @@
-import WebSR from  '@websr/websr';
-import { Muxer, ArrayBufferTarget, FileSystemWritableFileStreamTarget } from 'mp4-muxer';
+
 import Alpine from 'alpinejs'
 import ImageCompare from './lib/image-compare-viewer.min';
-import { MP4Demuxer } from "./demuxer_mp4";
 
+import WebSR from '@websr/websr'
 
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -44,8 +43,7 @@ let size = 'medium';
 let content = 'rl';
 
 
-let tfliteModelP;
-let tfliteModel;
+
 
 let download_name;
 let data;
@@ -88,33 +86,13 @@ const networks = {
 
 
 
-function uuidv4() {
-    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
-        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-    );
-}
 
 document.addEventListener("DOMContentLoaded", index);
 
-let tf;
-let tflite;
-let user_id;
+
 
 //===================  Initial Load ===========================
 
-
-function identify_user(){
-
-
-    user_id = localStorage.getItem("user_id");
-
-    if(!user_id) {
-        user_id = uuidv4();
-        localStorage.setItem("user_id", user_id);
-    }
-
-    Sprig('setUserId', user_id);
-}
 
 
 async function index() {
@@ -138,18 +116,6 @@ async function index() {
 
 
     window.chooseFile =  chooseFile;
-
-    try{
-        await import( '@tensorflow/tfjs-backend-cpu');
-        tf = await import('@tensorflow/tfjs-core');
-        tflite =  await import('@tensorflow/tfjs-tflite');
-
-        tfliteModelP =  tflite.loadTFLiteModel('./content_detection_mobilenet_v3.tflite',  {numThreads: 1, enableProfiling: false, maxProfilingBufferEntries: 1024});
-        identify_user();
-
-    } catch (e) {
-        Sentry.captureException(e);
-    }
 
 
 
@@ -335,14 +301,6 @@ async function setupPreview(data) {
         }
 
 
-        try{
-            tfliteModel = await tfliteModelP;
-
-            detected = await detectContentType();
-        } catch (e) {
-
-            console.warn('Unable to load TFLite Model');
-        }
 
 
 

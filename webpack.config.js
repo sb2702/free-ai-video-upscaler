@@ -1,6 +1,8 @@
 const path = require('path');
 const webpack = require('webpack');
 
+
+
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -47,7 +49,6 @@ module.exports = {
                 { from: "src/*.js", to: path.basename('[name].js') },
                 { from: "src/img/*.svg", to: path.basename('[name].svg') },
                 { from: "src/img/*.png", to: path.basename('[name].png') },
-                { from: "src/tflite/**", to: path.basename('[name][ext]') },
 
             ]
         })
