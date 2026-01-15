@@ -8,9 +8,11 @@ import {
   Output,
   QUALITY_HIGH,
   ReadableStreamSource,
+  EncodedAudioPacketSource,
   StreamTarget,
   VideoSample,
   VideoSampleSink,
+  EncodedPacketSink,
 } from 'mediabunny';
 
 import WebSR from '@websr/websr';
@@ -145,14 +147,27 @@ async function initRecording(
 
 
   const videoTrack = await input.getPrimaryVideoTrack();
+  const audioTrack  = await input.getPrimaryAudioTrack();
+  
+  let audioSource;
+  let audioSink;
+
+  if(audioTrack){
+
+
+    audioSource = new EncodedAudioPacketSource(audioTrack.codec);
+    output.addAudioTrack(audioSource);
+    audioSink = new EncodedPacketSink(audioTrack);
+
+  }
 
   if (!videoTrack) {
-    //TODO: Handle
+    return postMessage({cmd: 'error', data: 'The video does not have a video track'})
   }
 
   const decodable = await videoTrack.canDecode();
   if (!decodable) {
-     // TODO: Handle
+    return postMessage({cmd: 'error', data: 'The video could not be processed, is it a valid video file?'})
   }
 
 
@@ -218,6 +233,18 @@ async function initRecording(
 
 
   }
+
+
+  if (audioSink){
+
+    // Pass audio without re-encoding
+    for await (const packet of audioSink.packets()) {
+        audioSource.add(packet);
+    }
+
+  }
+
+
 
 
 
