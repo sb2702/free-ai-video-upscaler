@@ -142,8 +142,6 @@ async function initRecording(
   });
 
   output.addVideoTrack(videoSource, { frameRate: 30 });
-  await output.start();
-
 
 
   const videoTrack = await input.getPrimaryVideoTrack();
@@ -160,6 +158,11 @@ async function initRecording(
     audioSink = new EncodedPacketSink(audioTrack);
 
   }
+
+
+  await output.start();
+
+
 
   if (!videoTrack) {
     return postMessage({cmd: 'error', data: 'The video does not have a video track'})
@@ -237,9 +240,13 @@ async function initRecording(
 
   if (audioSink){
 
+    const config = await audioTrack.getDecoderConfig()
     // Pass audio without re-encoding
     for await (const packet of audioSink.packets()) {
-        audioSource.add(packet);
+        if(packet.timestamp > 0){
+          audioSource.add(packet, {decoderConfig: config});
+        }
+
     }
 
   }
