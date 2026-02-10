@@ -2843,10 +2843,10 @@ moment@~2.0.0:
   resolved "https://registry.npmjs.org/moment/-/moment-2.0.0.tgz"
   integrity sha512-l3jCjCJfC6pIuca13GMpCU4liEYvYk17XpFgpJSyLp8RX+dwdgrZBvtkaofmIigplezbG1VZFUgQbDFRSd37YA==
 
-mp4-muxer@^3.0.2:
-  version "3.0.2"
-  resolved "https://registry.npmjs.org/mp4-muxer/-/mp4-muxer-3.0.2.tgz"
-  integrity sha512-8RCrLktozDEPgvgpLj1LZRREV849wIDUuGWuipLIr+RLtFGeGVy/qlsvRgr0jS2IqDNeQYvjNIEOjIKXnmUc7Q==
+mp4-muxer@^5.2.2:
+  version "5.2.2"
+  resolved "https://registry.yarnpkg.com/mp4-muxer/-/mp4-muxer-5.2.2.tgz#40b93b1b727f5f4a9fbda131fe7c5b5013168bf1"
+  integrity sha512-dhozjTywI0h2qFzeShagt8YYw811fh1XlwiDCE2f6Aeqf6xG2CyuShoSa5E0AZDO8pPF0JOZ3wOmWBNWIGdSpQ==
   dependencies:
     "@types/dom-webcodecs" "^0.1.6"
     "@types/wicg-file-system-access" "^2020.9.5"

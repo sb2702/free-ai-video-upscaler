@@ -1,4 +1,3 @@
-// TODO: Add to package.json: "web-demuxer": "^1.0.0"
 import { WebDemuxer } from "web-demuxer";
 import { Muxer, StreamTarget, ArrayBufferTarget } from 'mp4-muxer';
 import WebSR from '@websr/websr';
@@ -12,13 +11,6 @@ interface ProcessorArgs {
   resolution: { width: number; height: number };
 }
 
-// Global references for queue sizes and progress reporting
-let decoder: VideoDecoder;
-let encoder: VideoEncoder;
-let demuxerController: TransformStreamDefaultController<any>;
-let decoderController: TransformStreamDefaultController<any>;
-let renderController: TransformStreamDefaultController<any>;
-let encoderController: TransformStreamDefaultController<any>;
 
 /**
  * Track demuxed chunks with indices for keyframe detection
@@ -26,12 +18,8 @@ let encoderController: TransformStreamDefaultController<any>;
 class DemuxerTrackingStream extends TransformStream<EncodedVideoChunk, { chunk: EncodedVideoChunk; index: number }> {
   constructor() {
     let chunkIndex = 0;
-
     super(
       {
-        start(controller) {
-          demuxerController = controller;
-        },
 
         async transform(chunk, controller) {
           // Apply backpressure if downstream is full
@@ -56,12 +44,12 @@ class VideoDecoderStream extends TransformStream<
 > {
   constructor(config: VideoDecoderConfig) {
     let pendingIndices: number[] = [];
+    let decoder: VideoDecoder;
+
 
     super(
       {
         start(controller) {
-          decoderController = controller;
-
           decoder = new VideoDecoder({
             output: (frame) => {
               const index = pendingIndices.shift()!;
@@ -119,9 +107,6 @@ class VideoUpscaleStream extends TransformStream<
   ) {
     super(
       {
-        start(controller) {
-          renderController = controller;
-        },
 
         async transform(item, controller) {
           const { frame, index } = item;
@@ -167,11 +152,10 @@ class VideoEncoderStream extends TransformStream<
   { chunk: EncodedVideoChunk; meta: EncodedVideoChunkMetadata }
 > {
   constructor(config: VideoEncoderConfig) {
+    let encoder: VideoEncoder;
     super(
       {
         start(controller) {
-          encoderController = controller;
-
           encoder = new VideoEncoder({
             output: (chunk, meta) => {
               controller.enqueue({ chunk, meta });
@@ -331,12 +315,19 @@ export default async function pipelineProcessor(args: ProcessorArgs): Promise<vo
 
   // Set up muxer target
   let target: StreamTarget | ArrayBufferTarget;
-  let writer: WritableStream | undefined;
+  let writer: FileSystemWritableFileStream | undefined;
 
   if (outputHandle) {
-    writer = await outputHandle.createWritable(); 
-    //@ts-expect-error
-    target = new StreamTarget(writer);
+    writer = <FileSystemWritableFileStream >await outputHandle.createWritable();
+    target = new StreamTarget({
+      //@ts-expect-error - onData can be async for FileSystemWritableFileStream
+      onData: async (data: ArrayBufferLike, position: number) => {
+        //@ts-expect-error - onData can be async for FileSystemWritableFileStream
+        await writer!.write({ type: 'write', position, data });
+      },
+      chunked: true,
+      chunkSize: 1024 * 1024 * 10
+    });
   } else {
     target = new ArrayBufferTarget();
   }
@@ -367,7 +358,7 @@ export default async function pipelineProcessor(args: ProcessorArgs): Promise<vo
   const bitrate = 2.5e6 * (width * height * 4) / (1280 * 720);
 
   const videoEncoderConfig: VideoEncoderConfig = {
-    codec: 'avc1.42001f',
+    codec: 'avc1.4d0034',
     width: width * 2,
     height: height * 2,
     bitrate: Math.round(bitrate),
