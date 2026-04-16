@@ -9,6 +9,7 @@ interface ProcessorArgs {
   upscaled_canvas: OffscreenCanvas;
   original_canvas: OffscreenCanvas;
   resolution: { width: number; height: number };
+  getPauseLock?: () => Promise<void> | null;
 }
 
 
@@ -42,7 +43,7 @@ class VideoDecoderStream extends TransformStream<
   { chunk: EncodedVideoChunk; index: number },
   { frame: VideoFrame; index: number }
 > {
-  constructor(config: VideoDecoderConfig) {
+  constructor(config: VideoDecoderConfig, getPauseLock?: () => Promise<void> | null) {
     let pendingIndices: number[] = [];
     let decoder: VideoDecoder;
 
@@ -65,6 +66,12 @@ class VideoDecoderStream extends TransformStream<
         },
 
         async transform(item, controller) {
+          if (getPauseLock) {
+            const lock = getPauseLock();
+            if (lock) {
+              await lock;
+            }
+          }
           // Check decoder queue backpressure
           while (decoder.decodeQueueSize >= 20) {
             await new Promise((r) => setTimeout(r, 10));
@@ -103,12 +110,19 @@ class VideoUpscaleStream extends TransformStream<
   constructor(
     private websr: WebSR,
     private upscaled_canvas: OffscreenCanvas,
-    private original_canvas: OffscreenCanvas
+    private original_canvas: OffscreenCanvas,
+    getPauseLock?: () => Promise<void> | null
   ) {
     super(
       {
 
         async transform(item, controller) {
+          if (getPauseLock) {
+            const lock = getPauseLock();
+            if (lock) {
+              await lock;
+            }
+          }
           const { frame, index } = item;
 
           // Create "before" preview (resized to 2x)
@@ -283,7 +297,7 @@ function prettyTime(secs: number): string {
  * Main pipeline processor using Streams API
  */
 export default async function pipelineProcessor(args: ProcessorArgs): Promise<void> {
-  const { inputHandle, outputHandle, websr, upscaled_canvas, original_canvas, resolution } = args;
+  const { inputHandle, outputHandle, websr, upscaled_canvas, original_canvas, resolution, getPauseLock } = args;
 
   console.log('Starting pipeline processor with Streams API');
 
@@ -372,8 +386,8 @@ export default async function pipelineProcessor(args: ProcessorArgs): Promise<vo
 
   const pipeline = chunkStream
     .pipeThrough(new DemuxerTrackingStream())
-    .pipeThrough(new VideoDecoderStream(videoDecoderConfig))
-    .pipeThrough(new VideoUpscaleStream(websr, upscaled_canvas, original_canvas))
+    .pipeThrough(new VideoDecoderStream(videoDecoderConfig, getPauseLock))
+    .pipeThrough(new VideoUpscaleStream(websr, upscaled_canvas, original_canvas, getPauseLock))
     .pipeThrough(new VideoEncoderStream(videoEncoderConfig))
     .pipeTo(videoWriter);
 

@@ -77,6 +77,7 @@ declare global {
         switchNetworkStyle: (el: HTMLInputElement) => Promise<void>;
         showSaveFilePicker: (options?: any) => Promise<FileSystemFileHandle>;
         showOpenFilePicker: (options?: any) => Promise<FileSystemFileHandle[]>;
+        togglePause: () => void;
     }
 }
 
@@ -193,6 +194,15 @@ async function setupPreview(data: ArrayBuffer): Promise<void> {
         video.currentTime = video.duration * 0.2 || 0;
         if(video.requestVideoFrameCallback)  video.requestVideoFrameCallback(showPreview);
         else requestAnimationFrame(showPreview);
+
+        window.togglePause = function () {
+            const currentState = Alpine.store('state');
+            if (currentState === 'processing') {
+                worker.postMessage({ cmd: 'pause' } satisfies WorkerRequestMessage);
+            } else if (currentState === 'paused') {
+                worker.postMessage({ cmd: 'resume' } satisfies WorkerRequestMessage);
+            }
+        };
 
     }
 
@@ -395,7 +405,9 @@ worker.onmessage = function (event: MessageEvent<WorkerResponseMessage>) {
 
     } else if (event.data.cmd === 'progress') {
         Alpine.store('progress', event.data.data);
-        Alpine.store('state', 'processing');
+        if (Alpine.store('state') !== 'paused') {
+            Alpine.store('state', 'processing');
+        }
 
     } else if (event.data.cmd === 'process') {
         // Processing started
@@ -410,6 +422,11 @@ worker.onmessage = function (event: MessageEvent<WorkerResponseMessage>) {
         Alpine.store('state', 'complete');
         const blob = new Blob([event.data.data], { type: "video/mp4" });
         Alpine.store('download_url', window.URL.createObjectURL(blob));
+    }
+    else if (event.data.cmd === 'paused') {
+        Alpine.store('state', 'paused');
+    } else if (event.data.cmd === 'resumed') {
+        Alpine.store('state', 'processing');
     }
 };
 
