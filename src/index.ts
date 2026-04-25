@@ -8,6 +8,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css";
 import "./lib/image-compare-viewer.min.css";
 
+const MAX_FILE_BLOB_SIZE=1900*1024*1024; //Just under 2GB, max ArrayBufferSize
+
 // Web Worker for video processing
 const worker = new Worker(new URL('./worker.ts', import.meta.url));
 
@@ -298,7 +300,7 @@ async function setupPreview(data: ArrayBuffer): Promise<void> {
 
         const estimated_size = (bitrate/8)*video.duration + (128/8)*video.duration; // Assume 128 kbps audio
 
-        if(estimated_size > 1900*1024*1024){
+        if(estimated_size > MAX_FILE_BLOB_SIZE){
             Alpine.store('target', 'writer');
         } else {
             Alpine.store('target', 'blob');
@@ -461,7 +463,7 @@ async function initRecording(): Promise<void> {
     let outputHandle: FileSystemFileHandle | undefined;
 
     // Max Blob size - 10 MB (for testing, should be much higher in production)
-    if (estimated_size > 1900 * 1024 * 1024) {
+    if (estimated_size > MAX_FILE_BLOB_SIZE) {
         try {
             outputHandle = await showFilePicker();
         } catch (e) {
@@ -489,7 +491,7 @@ function showError(message: string): void {
  * Calculate target bitrate based on video resolution
  */
 function getBitrate(): number {
-    return 5e6 * (video.videoWidth * video.videoHeight * 4) / (1280 * 720);
+    return 5e6 * Math.sqrt((video.videoWidth * video.videoHeight * 4) / (1280 * 720));
 }
 
 /**
