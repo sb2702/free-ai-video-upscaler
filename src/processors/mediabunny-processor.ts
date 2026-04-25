@@ -1,6 +1,5 @@
 import {
   BlobSource,
-  BufferTarget,
   CanvasSource,
   Input,
   MP4,
@@ -15,6 +14,7 @@ import {
 } from 'mediabunny';
 
 import WebSR from '@websr/websr';
+import InMemoryStorage from './in-memory-storage';
 
 interface ProcessorArgs {
   inputHandle: FileSystemFileHandle;
@@ -55,14 +55,21 @@ export default async function mediabunnyProcessor(args: ProcessorArgs): Promise<
     source
   });
 
-  let target: BufferTarget | StreamTarget;
+  let target: StreamTarget;
   let writer: WritableStream | undefined;
+  let storage: InMemoryStorage | undefined;
 
   if (outputHandle) {
     writer = await outputHandle.createWritable();
     target = new StreamTarget(writer);
   } else {
-    target = new BufferTarget();
+    storage = new InMemoryStorage();
+    const writableStream = new WritableStream({
+      write(chunk) {
+        storage.write(chunk.data, chunk.position);
+      }
+    });
+    target = new StreamTarget(writableStream);
   }
 
   const output = new Output({
@@ -89,6 +96,8 @@ export default async function mediabunnyProcessor(args: ProcessorArgs): Promise<
     output.addAudioTrack(audioSource);
     audioSink = new EncodedPacketSink(audioTrack);
   }
+
+  console.log("Media bunny")
 
   await output.start();
 
@@ -171,7 +180,7 @@ export default async function mediabunnyProcessor(args: ProcessorArgs): Promise<
   if (writer) {
     postMessage({ cmd: 'finished', data: null }, []);
   } else {
-    const buffer = (output.target as BufferTarget).buffer;
-    postMessage({ cmd: 'finished', data: buffer }, [buffer]);
+    const blob = storage!.toBlob('video/mp4');
+    postMessage({ cmd: 'finished', data: blob });
   }
 }

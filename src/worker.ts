@@ -120,7 +120,7 @@ self.onmessage = async function (event: MessageEvent<WorkerRequestMessage>) {
     
     case 'process':
 
-
+/*
       await pipelineProcessor({
         inputHandle: event.data.inputHandle,
         outputHandle: event.data.outputHandle,
@@ -130,9 +130,9 @@ self.onmessage = async function (event: MessageEvent<WorkerRequestMessage>) {
         resolution,
         getPauseLock: () => pauseLock
       });
-
+*/
      // To use MediaBunny instead, uncomment above import and use:
-   //  await mediabunnyProcessor({ inputHandle: event.data.inputHandle, outputHandle: event.data.outputHandle, websr, upscaled_canvas, original_canvas, resolution, getPauseLock: () => pauseLock });
+     await mediabunnyProcessor({ inputHandle: event.data.inputHandle, outputHandle: event.data.outputHandle, websr, upscaled_canvas, original_canvas, resolution, getPauseLock: () => pauseLock });
       break;
 
     case 'network':
