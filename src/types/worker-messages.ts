@@ -37,7 +37,7 @@ export type WorkerResponseMessage =
   | { cmd: 'eta'; data: string }
   | { cmd: 'process' }
   | { cmd: 'error'; data: string }
-  | { cmd: 'finished'; data: ArrayBuffer | null }
+  | { cmd: 'finished'; data: Blob | null }
   | { cmd: 'paused' }
   | { cmd: 'resumed' };
 

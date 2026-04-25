@@ -1,6 +1,7 @@
 import { WebDemuxer } from "web-demuxer";
-import { Muxer, StreamTarget, ArrayBufferTarget } from 'mp4-muxer';
+import { Muxer, StreamTarget } from 'mp4-muxer';
 import WebSR from '@websr/websr';
+import InMemoryStorage from './in-memory-storage';
 
 interface ProcessorArgs {
   inputHandle: FileSystemFileHandle;
@@ -217,7 +218,7 @@ class VideoEncoderStream extends TransformStream<
  * Create WritableStream for video chunks with progress reporting
  */
 function createVideoMuxerWriter(
-  muxer: Muxer<StreamTarget | ArrayBufferTarget>,
+  muxer: Muxer<StreamTarget>,
   duration: number
 ): WritableStream<{ chunk: EncodedVideoChunk; meta: EncodedVideoChunkMetadata }> {
   const startTime = performance.now();
@@ -259,7 +260,7 @@ function createVideoMuxerWriter(
  * Create WritableStream for audio chunks (passthrough)
  */
 function createAudioMuxerWriter(
-  muxer: Muxer<StreamTarget | ArrayBufferTarget>
+  muxer: Muxer<StreamTarget>
 ): WritableStream<EncodedAudioChunk> {
   return new WritableStream({
     async write(chunk) {
@@ -328,8 +329,9 @@ export default async function pipelineProcessor(args: ProcessorArgs): Promise<vo
   const height = resolution.height;
 
   // Set up muxer target
-  let target: StreamTarget | ArrayBufferTarget;
+  let target: StreamTarget;
   let writer: FileSystemWritableFileStream | undefined;
+  let storage: InMemoryStorage | undefined;
 
   if (outputHandle) {
     writer = <FileSystemWritableFileStream >await outputHandle.createWritable();
@@ -343,7 +345,16 @@ export default async function pipelineProcessor(args: ProcessorArgs): Promise<vo
       chunkSize: 1024 * 1024 * 10
     });
   } else {
-    target = new ArrayBufferTarget();
+    storage = new InMemoryStorage();
+    target = new StreamTarget({
+
+      onData: (data: Uint8Array, position: number) => {
+
+        storage!.write(data, position);
+      },
+      chunked: true,
+      chunkSize: 1024 * 1024 * 10
+    });
   }
 
   // Configure muxer
@@ -409,8 +420,8 @@ export default async function pipelineProcessor(args: ProcessorArgs): Promise<vo
     await writer.close();
     postMessage({ cmd: 'finished', data: null }, []);
   } else {
-    const buffer = (target as ArrayBufferTarget).buffer;
-    postMessage({ cmd: 'finished', data: buffer }, [buffer]);
+    const blob = storage!.toBlob('video/mp4');
+    postMessage({ cmd: 'finished', data: blob });
   }
 
   console.log('Pipeline processing complete!');

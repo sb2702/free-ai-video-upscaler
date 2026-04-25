@@ -420,8 +420,7 @@ worker.onmessage = function (event: MessageEvent<WorkerResponseMessage>) {
 
     } else if (event.data.cmd === 'finished') {
         Alpine.store('state', 'complete');
-        const blob = new Blob([event.data.data], { type: "video/mp4" });
-        Alpine.store('download_url', window.URL.createObjectURL(blob));
+        Alpine.store('download_url', event.data.data ? window.URL.createObjectURL(event.data.data) : null);
     }
     else if (event.data.cmd === 'paused') {
         Alpine.store('state', 'paused');
