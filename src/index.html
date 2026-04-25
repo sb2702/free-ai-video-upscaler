@@ -84,7 +84,7 @@ I built it because from previous experience as a casual user who just wants to u
 
 
 
-<div id="start-panel" class="w-[640px] mx-auto bg-gray-light rounded-3xl h-[680px] p-6 box-border border border-gray-border" x-show="$store.state === 'preview' || $store.state === 'processing' || $store.state === 'complete'">
+<div id="start-panel" class="w-[640px] mx-auto bg-gray-light rounded-3xl h-[680px] p-6 box-border border border-gray-border" x-show="$store.state === 'preview' || $store.state === 'processing' || $store.state === 'complete' || $store.state === 'paused'">
 
     <div id="image-compare-outer">
         <div id="image-compare" >
@@ -152,12 +152,30 @@ I built it because from previous experience as a casual user who just wants to u
 
 
 
-    <div id="info"  class="" x-show="$store.state === 'processing'">
+    <div id="info"  class="" x-show="$store.state === 'processing' || $store.state === 'paused'">
         <p class="text-center mx-auto my-2">Upscaling <span x-text="$store.filename" class="font-mono bg-gray-200 rounded-lg py-1 px-2 mx-auto text-center"></span> .Estimated time left: <span x-text="$store.eta"></span></p>
 
+        <p class="text-center mx-auto my-2 text-yellow-600 font-bold" x-show="$store.state === 'paused'">
+            ⏸ Processing Paused
+        </p>
 
         <div class="progress" id="progress">
-            <div  class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"  x-bind:style="{width: $store.progress + '%'}" x-bind:aria-valuenow="$store.progress" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
+            <div  class="progress-bar progress-bar-striped progress-bar-animated" 
+                  x-bind:class="{ 'bg-warning': $store.state === 'paused' }"
+                  role="progressbar"  
+                  x-bind:style="{width: $store.progress + '%'}" 
+                  x-bind:aria-valuenow="$store.progress" 
+                  aria-valuemin="0" 
+                  aria-valuemax="100" 
+                  style="width: 75%"></div>
+        </div>
+
+        <div class="flex flex-row justify-center mt-4">
+            <button type="button" 
+                    class="btn btn-outline-primary" 
+                    onclick="togglePause()" 
+                    x-text="$store.state === 'paused' ? 'Resume Upscaling' : 'Pause Upscaling'">
+            </button>
         </div>
     </div>
 

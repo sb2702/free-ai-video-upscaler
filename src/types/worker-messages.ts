@@ -13,7 +13,9 @@ export type WorkerRequestMessage =
   | { cmd: 'isSupported' }
   | { cmd: 'init'; data: InitData }
   | { cmd: 'network'; data: NetworkData }
-  | { cmd: 'process'; inputHandle: FileSystemFileHandle; outputHandle?: FileSystemFileHandle };
+  | { cmd: 'process'; inputHandle: FileSystemFileHandle; outputHandle?: FileSystemFileHandle }
+  | { cmd: 'pause' }
+  | { cmd: 'resume' };
 
 export interface InitData {
   bitmap: ImageBitmap;
@@ -35,7 +37,9 @@ export type WorkerResponseMessage =
   | { cmd: 'eta'; data: string }
   | { cmd: 'process' }
   | { cmd: 'error'; data: string }
-  | { cmd: 'finished'; data: ArrayBuffer | null };
+  | { cmd: 'finished'; data: ArrayBuffer | null }
+  | { cmd: 'paused' }
+  | { cmd: 'resumed' };
 
 // Type guard helpers
 export function isWorkerRequestMessage(msg: any): msg is WorkerRequestMessage {
