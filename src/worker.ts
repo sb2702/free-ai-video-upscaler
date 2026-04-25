@@ -10,7 +10,7 @@ import type {
 
 // Processors
 import pipelineProcessor from './processors/pipeline-processor';
-// import mediabunnyProcessor from './processors/mediabunny-processor'; // Fallback if needed
+ import mediabunnyProcessor from './processors/mediabunny-processor'; // Fallback if needed
 
 // Worker state
 let gpu: any | false;
@@ -119,6 +119,8 @@ self.onmessage = async function (event: MessageEvent<WorkerRequestMessage>) {
       break;
     
     case 'process':
+
+
       await pipelineProcessor({
         inputHandle: event.data.inputHandle,
         outputHandle: event.data.outputHandle,
@@ -128,8 +130,9 @@ self.onmessage = async function (event: MessageEvent<WorkerRequestMessage>) {
         resolution,
         getPauseLock: () => pauseLock
       });
-      // To use MediaBunny instead, uncomment above import and use:
-      // await mediabunnyProcessor({ inputHandle: event.data.inputHandle, outputHandle: event.data.outputHandle, websr, upscaled_canvas, original_canvas, resolution });
+
+     // To use MediaBunny instead, uncomment above import and use:
+   //  await mediabunnyProcessor({ inputHandle: event.data.inputHandle, outputHandle: event.data.outputHandle, websr, upscaled_canvas, original_canvas, resolution, getPauseLock: () => pauseLock });
       break;
 
     case 'network':

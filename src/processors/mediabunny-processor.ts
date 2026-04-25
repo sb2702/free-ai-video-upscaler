@@ -23,6 +23,7 @@ interface ProcessorArgs {
   upscaled_canvas: OffscreenCanvas;
   original_canvas: OffscreenCanvas;
   resolution: { width: number; height: number };
+  getPauseLock?: () => Promise<void> | null;
 }
 
 function prettyTime(secs: number): string {
@@ -41,7 +42,7 @@ function prettyTime(secs: number): string {
  * Video processing using MediaBunny
  */
 export default async function mediabunnyProcessor(args: ProcessorArgs): Promise<void> {
-  const { inputHandle, outputHandle, websr, upscaled_canvas, original_canvas, resolution } = args;
+  const { inputHandle, outputHandle, websr, upscaled_canvas, original_canvas, resolution, getPauseLock } = args;
 
   // Get the file from the handle
   const file = await inputHandle.getFile();
@@ -123,6 +124,14 @@ export default async function mediabunnyProcessor(args: ProcessorArgs): Promise<
 
   // Loop over all frames
   for await (const sample of sink.samples()) {
+    // Check if we need to pause
+    if (getPauseLock) {
+      const lock = getPauseLock();
+      if (lock) {
+        await lock;
+      }
+    }
+
     const videoFrame = sample.toVideoFrame();
 
     // This is for the 'before' preview
