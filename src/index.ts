@@ -8,7 +8,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css";
 import "./lib/image-compare-viewer.min.css";
 
-const MAX_FILE_BLOB_SIZE=19000*1024*1024; //Just under 2GB, max ArrayBufferSize
+const MAX_FILE_BLOB_SIZE=1900*1024*1024; //Just under 2GB, max ArrayBufferSize
 
 // Web Worker for video processing
 const worker = new Worker(new URL('./worker.ts', import.meta.url));
