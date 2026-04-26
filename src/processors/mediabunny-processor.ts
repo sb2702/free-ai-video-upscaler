@@ -97,7 +97,6 @@ export default async function mediabunnyProcessor(args: ProcessorArgs): Promise<
     audioSink = new EncodedPacketSink(audioTrack);
   }
 
-  console.log("Media bunny")
 
   await output.start();
 
@@ -143,6 +142,8 @@ export default async function mediabunnyProcessor(args: ProcessorArgs): Promise<
 
     const videoFrame = sample.toVideoFrame();
 
+
+
     // This is for the 'before' preview
     const bitmap = await createImageBitmap(videoFrame, {
       resizeHeight: videoFrame.codedHeight * 2,
@@ -163,6 +164,7 @@ export default async function mediabunnyProcessor(args: ProcessorArgs): Promise<
 
     videoFrame.close();
     sample.close();
+
   }
 
   // Pass audio without re-encoding

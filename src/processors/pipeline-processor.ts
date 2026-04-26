@@ -1,5 +1,12 @@
 import { WebDemuxer } from "web-demuxer";
-import { Muxer, StreamTarget } from 'mp4-muxer';
+import {
+  Output,
+  Mp4OutputFormat,
+  StreamTarget,
+  EncodedVideoPacketSource,
+  EncodedAudioPacketSource,
+  EncodedPacket,
+} from 'mediabunny';
 import WebSR from '@websr/websr';
 import InMemoryStorage from './in-memory-storage';
 
@@ -218,15 +225,20 @@ class VideoEncoderStream extends TransformStream<
  * Create WritableStream for video chunks with progress reporting
  */
 function createVideoMuxerWriter(
-  muxer: Muxer<StreamTarget>,
+  videoSource: EncodedVideoPacketSource,
   duration: number
-): WritableStream<{ chunk: EncodedVideoChunk; meta: EncodedVideoChunkMetadata }> {
+) {
   const startTime = performance.now();
   let frameCount = 0;
 
-  return new WritableStream({
+  return new WritableStream<{ chunk: EncodedVideoChunk; meta: EncodedVideoChunkMetadata }>({
     async write(value) {
-      muxer.addVideoChunk(value.chunk, value.meta);
+      try {
+        await videoSource.add(EncodedPacket.fromEncodedChunk(value.chunk), value.meta);
+      } catch (e) {
+        console.error('Video muxer writer error:', e);
+        throw e;
+      }
       frameCount++;
 
       // Report progress every 30 frames
@@ -260,12 +272,17 @@ function createVideoMuxerWriter(
  * Create WritableStream for audio chunks (passthrough)
  */
 function createAudioMuxerWriter(
-  muxer: Muxer<StreamTarget>
-): WritableStream<EncodedAudioChunk> {
-  return new WritableStream({
+  audioSource: EncodedAudioPacketSource,
+  audioConfig: AudioDecoderConfig
+) {
+  let configWritten = false;
+
+  return new WritableStream<EncodedAudioChunk>({
     async write(chunk) {
       if (chunk.timestamp >= 0) {
-        muxer.addAudioChunk(chunk);
+        const config = configWritten ? undefined : { decoderConfig: audioConfig };
+        configWritten = true;
+        await audioSource.add(EncodedPacket.fromEncodedChunk(chunk), config);
       }
     },
 
@@ -328,56 +345,32 @@ export default async function pipelineProcessor(args: ProcessorArgs): Promise<vo
   const width = resolution.width;
   const height = resolution.height;
 
-  // Set up muxer target
+  // Set up MediaBunny output
   let target: StreamTarget;
   let writer: FileSystemWritableFileStream | undefined;
   let storage: InMemoryStorage | undefined;
 
   if (outputHandle) {
-    writer = <FileSystemWritableFileStream >await outputHandle.createWritable();
-    target = new StreamTarget({
-      //@ts-expect-error - onData can be async for FileSystemWritableFileStream
-      onData: async (data: ArrayBufferLike, position: number) => {
-        //@ts-expect-error - onData can be async for FileSystemWritableFileStream
-        await writer!.write({ type: 'write', position, data });
-      },
-      chunked: true,
-      chunkSize: 1024 * 1024 * 10
-    });
+    writer = await outputHandle.createWritable();
+    target = new StreamTarget(writer);
   } else {
     storage = new InMemoryStorage();
-    target = new StreamTarget({
-
-      onData: (data: Uint8Array, position: number) => {
-
-        storage!.write(data, position);
-      },
-      chunked: true,
-      chunkSize: 1024 * 1024 * 10
+    const writableStream = new WritableStream({
+      write(chunk) {
+        storage!.write(chunk.data, chunk.position);
+      }
     });
+    target = new StreamTarget(writableStream);
   }
 
-  // Configure muxer
-  const muxerOptions: any = {
+  const output = new Output({
+    format: new Mp4OutputFormat(),
     target,
-    video: {
-      codec: 'avc',
-      width: width * 2,
-      height: height * 2,
-    },
-    firstTimestampBehavior: 'offset',
-    fastStart: 'in-memory',
-  };
+  });
 
-  if (audioConfig) {
-    muxerOptions.audio = {
-      codec: 'aac',
-      numberOfChannels: audioConfig.numberOfChannels,
-      sampleRate: audioConfig.sampleRate,
-    };
-  }
-
-  const muxer = new Muxer(muxerOptions);
+  // Parse framerate from demuxer (e.g. "30/1" or "24000/1001"), fall back to 30
+  const [fpsNum, fpsDen] = (videoTrack.r_frame_rate || '30/1').split('/').map(Number);
+  const framerate = (fpsNum && fpsDen) ? fpsNum / fpsDen : 30;
 
   // Configure encoder
   const bitrate = 2.5e6 * (width * height * 4) / (1280 * 720);
@@ -387,13 +380,22 @@ export default async function pipelineProcessor(args: ProcessorArgs): Promise<vo
     width: width * 2,
     height: height * 2,
     bitrate: Math.round(bitrate),
-    framerate: 30,
+    framerate: framerate,
   };
+
+  const videoSource = new EncodedVideoPacketSource('avc');
+  output.addVideoTrack(videoSource);
+
+  let audioSource: EncodedAudioPacketSource | undefined;
+  if (audioConfig) {
+    audioSource = new EncodedAudioPacketSource('aac');
+    output.addAudioTrack(audioSource);
+  }
 
   // Build the pipeline!
   const chunkStream = demuxer.read('video', 0) as ReadableStream<EncodedVideoChunk>;
 
-  const videoWriter = createVideoMuxerWriter(muxer, duration);
+  const videoWriter = createVideoMuxerWriter(videoSource, duration);
 
   const pipeline = chunkStream
     .pipeThrough(new DemuxerTrackingStream())
@@ -402,19 +404,21 @@ export default async function pipelineProcessor(args: ProcessorArgs): Promise<vo
     .pipeThrough(new VideoEncoderStream(videoEncoderConfig))
     .pipeTo(videoWriter);
 
+  await output.start();
+
   // Process video
   await pipeline;
 
   // Process audio (passthrough)
-  if (audioConfig) {
+  if (audioConfig && audioSource) {
     console.log('Processing audio...');
     const audioStream = demuxer.read('audio', 0) as ReadableStream<EncodedAudioChunk>;
-    const audioWriter = createAudioMuxerWriter(muxer);
+    const audioWriter = createAudioMuxerWriter(audioSource, audioConfig);
     await audioStream.pipeTo(audioWriter);
   }
 
   // Finalize
-  muxer.finalize();
+  await output.finalize();
 
   if (writer) {
     await writer.close();
